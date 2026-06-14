@@ -11,3 +11,9 @@ wheels/
 
 
 datasets/
+IP-Adapter/
+assets/
+outputs/
+notebooks/
+wandb/
+models/
