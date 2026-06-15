@@ -1,5 +1,7 @@
 # ___***[ICCV'25] SynFER: Towards Boosting Facial Expression Recognition with Synthetic Data (Reproduced version)***___
 
+This repo aims to reproduce the result in the [SynFER](https://openaccess.thecvf.com/content/ICCV2025/papers/He_SynFER_Towards_Boosting_Facial_Expression_Recognition_with_Synthetic_Data_ICCV_2025_paper.pdf) paper.
+
 ## Training Command: 
 ```bash
 accelerate launch src/train_text_to_image_lora.py \
@@ -16,7 +18,7 @@ accelerate launch src/train_text_to_image_lora.py \
 - [X] Fine-tuning SD on the FEText dataset
 - [ ] Continue fine-tuning on the CelebA-HQ and FFHQ
 - [X] Use this tool (https://github.com/lingjivoo/OpenGraphAU) generate facial action units 
-- [ ] Train the AU-Adapter
+- [X] Train the AU-Adapter
 - [ ] Inference
 - [ ] Table 5. Ablation study on AU injection and semantic guidance (SG) on both generation quality and supervised learning. SD denotes Stable Diffusion, which is used as a baseline.
 - [ ] Figure 5. Example of generated samples: Stable Diffusion, +FEText, +FEText+FAUs, +FEText+FAUs+SG.
@@ -26,12 +28,9 @@ accelerate launch src/train_text_to_image_lora.py \
 ## Notes:
 - Diffusers' EMMAAModel
 
-# Tasks:
-- Save images of the log validation into disk
-- Add tqdm in the "for step, batch in enumerate(train_dataloader):"
-- 
-
 ## Resources:
  - [SynFER](https://github.com/C0notSilly/SynFER)
  - [IP-Adapter](https://github.com/tencent-ailab/IP-Adapter/)
  - [Diffusers - Fine-tuning Text-to-Image Model](https://github.com/huggingface/diffusers/tree/main/examples/text_to_image)
+ - [POSTER++](https://github.com/Talented-Q/POSTER_V2)
+ - [clean-fid for Evaluating Generative Models](https://github.com/GaParmar/clean-fid)

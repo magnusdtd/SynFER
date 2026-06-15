@@ -17,3 +17,5 @@ outputs/
 notebooks/
 wandb/
 models/
+!POSTER_V2/models
+POSTER_V2/models/pretrain
