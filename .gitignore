@@ -19,3 +19,7 @@ wandb/
 models/
 !POSTER_V2/models
 POSTER_V2/models/pretrain
+SynFER_source_code/
+slide/outputs/
+report/outputs/
+*.pdf

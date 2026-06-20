@@ -1,0 +1,109 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{fontspec}
+% \setmainfont{Times New Roman}
+% \setsansfont{Arial}
+% \setmonofont{Consolas}
+\setmainfont{DejaVu Serif}
+\setsansfont{DejaVu Sans}
+\setmonofont{DejaVu Sans Mono}
+
+\usepackage[vietnamese]{babel}
+\selectlanguage{vietnamese}     
+
+\usepackage{hcmus-report-template}
+\usepackage{tocloft}
+
+\newtheorem{lemma}{Bổ đề}
+\newcommand{\todo}[1]{\textcolor{blue}{#1}}
+
+% Disable indentation on new paragraphs
+\setlength{\parindent}{0pt}
+
+% Line spacing 1.5
+\renewcommand{\baselinestretch}{1.5}
+\setlength{\headheight}{30pt}
+
+
+% Optional: graphic path
+% \graphicspath{PATH_TO_GRAPHIC_FOLDER}
+
+% To use Times font family, uncomment this row
+% \usepackage{mathptmx}
+
+% To use roman section/subsection, uncomment these rows
+% \renewcommand{\thesection}{\Roman{section}}
+% \renewcommand{\thesubsection}{\thesection.\Roman{subsection}}
+
+% Define course name, report name and report title.
+\newcommand{\coursename}{ Nhận dạng}
+\newcommand{\reportname}{Face Synthesis}
+\newcommand{\reporttitle}{Đồ án môn học}
+\renewcommand{\thesection}{Chương \arabic{section}}
+\renewcommand{\thesubsection}{\arabic{section}.\arabic{subsection}}
+\setlength{\cftsecnumwidth}{5.5em}
+\setlength{\cftsubsecindent}{2.5em}
+\setlength{\cftsubsecnumwidth}{3.5em}
+
+\newcommand{\studentname}{
+Đàm Tiến Đạt (23120118) \\
+Nguyễn Đăng Khoa (23120134) \\
+Huỳnh Mạnh Tường (23120105) \\
+}
+\newcommand{\teachername}{
+\begin{tabular}[t]{@{}l@{}}
+Thầy Lê Hoàng Thái \\
+Thầy Nguyễn Thanh Tình \\
+\end{tabular}
+}
+
+% Header
+\lhead{\reporttitle  \\ \reportname}
+\rhead{
+Trường Đại học Khoa học Tự nhiên - ĐHQG HCM\\
+\coursename
+}
+
+% Footer
+\newcommand{\leftfooter}{\LaTeX\ by \href{https://github.com/magnusdtd}{Đàm Tiến Đạt}}
+% \lfoot{\leftfooter}
+
+% ============ DOCUMENT ============
+\begin{document}
+
+\pagenumbering{gobble}
+\fancyfoot[R]{}
+\input{content/title.tex}
+\pagestyle{fancy}
+
+\tableofcontents
+\pagebreak
+\listoftables
+\pagebreak
+\listoffigures
+\pagebreak
+
+\pagenumbering{arabic}
+\setcounter{page}{3}
+\fancyfoot[C]{}
+\fancyfoot[R]{Trang \thepage}
+
+\input{content/glossary.tex}
+\pagebreak
+
+\input{content/work_assignment}
+\input{content/book_analysis.tex}
+\input{content/synfer.tex}
+\input{content/analysis_and_comparison.tex}
+\input{content/experiment.tex}
+\input{content/eval.tex}
+\input{content/demo.tex}
+
+
+% % References
+\input{ref/ref.tex}
+
+% % Appendix
+% \appendix
+% % Add \cleardoublepage to move appendices to next page.
+% \input{appendix/appendix.tex}
+\end{document}
