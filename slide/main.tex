@@ -1,0 +1,53 @@
+\documentclass[aspectratio=169,xcolor=dvipsnames]{beamer}
+
+\usepackage{theme/beamerthemeSimpleDarkBlue}
+
+\usepackage{hyperref}
+\usepackage{graphicx} % Allows including images
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+\usepackage[utf8]{vietnam}
+
+\newcommand{\todo}[1]{\textcolor{blue}{#1}}
+\usepackage{hyperref}
+
+\graphicspath{{img/}}
+
+\title{Đồ án môn học}
+\subtitle{Face Synthesis}
+\author{
+Đàm Tiến Đạt (23120118) \\ 
+Nguyễn Đăng Khoa (23120134) \\ 
+Huỳnh Mạnh Tường (23120105)
+}
+\institute{
+Nhận dạng\\
+Trường Đại học Khoa học Tự nhiên, ĐHQG-HCM
+}
+\date{\today}
+\titlegraphic{\includegraphics[height=1.15cm]{hcmus-logo.png}}
+
+\newif\ifshowsectionframe
+\showsectionframetrue
+
+\AtBeginSection[]{
+    \ifshowsectionframe
+        \begin{frame}{Mục lục}
+            \tableofcontents[currentsection]
+        \end{frame}
+    \fi
+    \showsectionframetrue
+}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Mục lục}
+    \tableofcontents
+\end{frame}
+
+\input{content/slides}
+
+\end{document}
