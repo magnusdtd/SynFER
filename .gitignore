@@ -23,3 +23,5 @@ SynFER_source_code/
 slide/outputs/
 report/outputs/
 *.pdf
+slide/indent.log
+report/indent.log
