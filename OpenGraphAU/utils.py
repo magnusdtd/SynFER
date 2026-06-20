@@ -432,7 +432,7 @@ class image_eval:
 
 
 def load_state_dict(model, path):
-    checkpoints = torch.load(path, map_location=torch.device("cpu"))
+    checkpoints = torch.load(path, map_location=torch.device("cpu"), weights_only=False)
     state_dict = checkpoints["state_dict"]
     from collections import OrderedDict
 

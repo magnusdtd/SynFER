@@ -702,7 +702,7 @@ def load_pretrained_weights(model, name):
     checkpoint = None
     if os.path.exists(local_path):
         try:
-            checkpoint = torch.load(local_path, map_location="cpu")
+            checkpoint = torch.load(local_path, map_location="cpu", weights_only=False)
         except Exception as e:
             print(f"Warning: Failed to load local pretrained weights for {name} from {local_path}: {e}")
 

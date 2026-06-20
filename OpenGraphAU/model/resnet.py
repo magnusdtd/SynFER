@@ -173,7 +173,7 @@ def load_pretrained_weights(model, name):
     state_dict = None
     if os.path.exists(local_path):
         try:
-            state_dict = torch.load(local_path, map_location="cpu")
+            state_dict = torch.load(local_path, map_location="cpu", weights_only=False)
         except Exception as e:
             print(f"Warning: Failed to load local pretrained weights for {name} from {local_path}: {e}")
 
