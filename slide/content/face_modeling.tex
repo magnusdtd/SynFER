@@ -1,5 +1,195 @@
 \subsection{Mô hình hóa khuôn mặt}
 
-\begin{frame}{Mô hình hóa khuôn mặt}
-    \Large Trình bày phần Face Modeling trong quyển sách
+% ---- Slide 1: Tổng quan ----
+\begin{frame}{Mô hình hóa khuôn mặt -- Tổng quan}
+    Tái dựng mô hình 3D khuôn mặt từ ảnh 2D
+
+    \bigskip
+    Ba hướng tiếp cận chính:
+    \begin{itemize}
+        \item Từ chuỗi ảnh
+        \item Từ hai ảnh trực giao
+        \item Từ một ảnh đơn
+    \end{itemize}
+
+    \bigskip
+    Ứng dụng: nhận dạng khuôn mặt đa góc độ, game, điện ảnh, avatar tương tác
+\end{frame}
+
+% ---- Slide 2: Chuỗi ảnh -- Không gian tuyến tính ----
+\begin{frame}{Tái dựng từ chuỗi ảnh -- Không gian hình học tuyến tính}
+    \begin{columns}[T]
+        \begin{column}{0.54\textwidth}
+            Biểu diễn tuyến tính \cite{liu2001rapid}:
+            \[
+                \mathcal{S} = \mathcal{S}^0 + \sum_{j=1}^{m} c_j \mathcal{M}^j, \quad c_j \in [l_j, u_j]
+            \]
+            \begin{itemize}
+                \item $\mathcal{S}^0$: khuôn mặt trung lập
+                \item $\mathcal{M}^j$: metric biến dạng tuyến tính
+                \item Mọi khuôn mặt trong không gian đều hợp lệ về mặt hình học
+            \end{itemize}
+
+            \medskip
+            Người dùng đánh dấu 5 điểm đặc trưng $\Rightarrow$ tự động hoàn toàn
+        \end{column}
+        \begin{column}{0.43\textwidth}
+            \begin{figure}
+                \centering
+                \includegraphics[width=0.75\linewidth]{Fig.20.1.png}
+                \caption{Khuôn mặt trung lập \cite{liu2001rapid}.}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ---- Slide 3: Khớp mô hình -- ICP ----
+\begin{frame}{Bài toán khớp mô hình -- Giải lặp ICP}
+    Tối thiểu hóa khoảng cách điểm -- bề mặt \cite{fua1999animated}:
+    \[
+        \min \sum_{i} \text{Dist}\bigl[P_i,\, \mathcal{T}(S)\bigr]
+    \]
+
+    \medskip
+    \begin{columns}[T]
+        \begin{column}{0.50\textwidth}
+            Giải lặp ICP:
+            \begin{itemize}
+                \item Cố định $c_j$ $\Rightarrow$ giải $R, T, s$ bằng quaternion
+                \item Cố định $R, T, s$ $\Rightarrow$ giải tuyến tính cho $c_j$
+                \item Lặp đến hội tụ
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.47\textwidth}
+            \begin{figure}
+                \centering
+                \includegraphics[width=\linewidth]{Fig.20.2.png}
+                \caption{Ảnh gốc so với mô hình tái dựng \cite{liu2001rapid}.}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ---- Slide 4: Model-Based Bundle Adjustment ----
+\begin{frame}{Điều chỉnh bó dựa trên mô hình \cite{shan2001model}}
+    \begin{columns}[T]
+        \begin{column}{0.50\textwidth}
+            Kết hợp ước lượng chuyển động và khớp mô hình vào một bài toán tối ưu duy nhất
+
+            \medskip
+            \begin{itemize}
+                \item Loại bỏ biến vị trí 3D $\Rightarrow$ không gian tìm kiếm nhỏ hơn
+                \item Hệ tối ưu ổn định hơn
+                \item Kết quả tái dựng gần thực tế hơn
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.47\textwidth}
+            \begin{figure}
+                \centering
+                \includegraphics[width=\linewidth]{Fig.20.3.png}
+                \caption{Truyền thống (trái), thực tế (giữa), dựa trên mô hình (phải) \cite{shan2001model}.}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ---- Slide 5: Hai ảnh trực giao ----
+\begin{frame}{Tái dựng từ hai ảnh trực giao \cite{akimoto1993automatic}}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            Nguyên lý:
+            \begin{itemize}
+                \item Ảnh chính diện $\Rightarrow$ trục ngang + dọc
+                \item Ảnh nghiêng $\Rightarrow$ độ sâu
+                \item Đánh dấu điểm đặc trưng thủ công
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            Đánh giá:
+            \begin{itemize}
+                \item[$+$] Đơn giản, ổn định về mặt số
+                \item[$+$] Được dùng trong phần mềm thương mại
+                \item[$-$] Khó thu thập hai ảnh trực giao trong thực tế
+                \item[$-$] Vẫn đòi hỏi nhiều can thiệp thủ công
+            \end{itemize}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ---- Slide 6: Một ảnh đơn -- Blanz & Vetter ----
+\begin{frame}{Tái dựng từ một ảnh đơn -- Mô hình biến hình}
+    Blanz \& Vetter \cite{blanz1999morphable}:
+
+    \medskip
+    \begin{columns}[T]
+        \begin{column}{0.55\textwidth}
+            \begin{itemize}
+                \item Không gian hình học: tổ hợp tuyến tính các khuôn mặt mẫu
+                \item Không gian kết cấu: tổ hợp tuyến tính kết cấu mẫu
+                \item Tối ưu hệ số sao cho ảnh tổng hợp $\approx$ ảnh đầu vào
+            \end{itemize}
+
+            \bigskip
+            Hạn chế: hiệu quả giảm khi gặp loại da khác biệt so với dữ liệu mẫu
+        \end{column}
+        \begin{column}{0.42\textwidth}
+            \centering\small
+            \renewcommand{\arraystretch}{1.5}
+            \begin{tabular}{c}
+                \fbox{\quad Ảnh 2D đầu vào \quad} \\[2pt]
+                $\downarrow$ \quad\quad\quad\quad $\downarrow$ \\[2pt]
+                \fbox{KG hình học} \quad \fbox{KG kết cấu} \\[2pt]
+                $\searrow$ \quad\quad\quad $\swarrow$ \\[2pt]
+                \fbox{\quad Mô hình 3D \quad} \\
+            \end{tabular}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ---- Slide 7: Một ảnh đơn -- Liu ----
+\begin{frame}{Tái dựng từ một ảnh đơn -- Hệ thống tự động}
+    \begin{columns}[T]
+        \begin{column}{0.50\textwidth}
+            Liu \cite{liu2001single}:
+            \begin{itemize}
+                \item Phát hiện khuôn mặt $\Rightarrow$ căn chỉnh đặc trưng tự động
+                \item Khớp mô hình trong không gian tuyến tính với phép chiếu trực giao
+                \item Hỗ trợ tạo sinh biểu cảm trên mô hình tái dựng
+            \end{itemize}
+
+            \medskip
+            Hạn chế: độ sâu không chính xác, chấp nhận được ở góc quay nhỏ
+        \end{column}
+        \begin{column}{0.47\textwidth}
+            \begin{figure}
+                \centering
+                \includegraphics[width=\linewidth]{Fig.20.4.png}
+                \caption{Ảnh đầu vào (trái) và căn chỉnh đặc trưng (phải) \cite{liu2001single}.}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ---- Slide 8: Kết quả tái dựng từ một ảnh ----
+\begin{frame}{Kết quả tái dựng từ một ảnh đơn}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            \begin{figure}
+                \centering
+                \includegraphics[width=\linewidth]{Fig.20.5.png}
+                \caption{Mô hình 3D nhìn từ nhiều góc độ \cite{liu2001single}.}
+            \end{figure}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{figure}
+                \centering
+                \includegraphics[width=\linewidth]{Fig.20.6.png}
+                \caption{Biểu cảm tổng hợp từ mô hình tái dựng \cite{liu2001single}.}
+            \end{figure}
+        \end{column}
+    \end{columns}
+
+    \medskip
+    \centering
+    \small Không gian tuyến tính cho phép tạo sinh biểu cảm ngay trên mô hình tái dựng tự động
 \end{frame}
