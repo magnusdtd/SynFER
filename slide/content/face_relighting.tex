@@ -1,5 +1,119 @@
+
 \subsection{Thay đổi điều kiện ánh sáng}
 
-\begin{frame}{Thay đổi điều kiện ánh sáng}
-    \Large Trình bày phần Face Relighting trong quyển sách
+% --- Slide 1: Tổng quan ---
+\begin{frame}{Thay đổi điều kiện ánh sáng -- Tổng quan}
+    \begin{block}{Mục tiêu cốt lõi}
+        Tổng hợp ảnh khuôn mặt chân thực dưới \textbf{chiếu sáng tùy ý} từ ảnh gốc ban đầu.
+    \end{block}
+
+    \vspace{0.5cm}
+    Hai kỹ thuật trọng tâm mang tính ứng dụng cao:
+    \begin{itemize}
+        \item \textbf{Ảnh tỷ lệ} \cite{riklin2001quotient}: ánh xạ chiếu sáng giữa hai khuôn mặt nhờ tính bất biến của tỷ lệ cường độ điểm ảnh.
+        \item \textbf{Spherical Harmonics} \cite{wen2003face}: ước lượng trực tiếp bản đồ bức xạ từ \textit{một ảnh đầu vào duy nhất} để tái chiếu sáng.
+    \end{itemize}
+
+    \vspace{0.3cm}
+    \textbf{Ứng dụng tiêu biểu:} Tiền xử lý dữ liệu và tạo dữ liệu huấn luyện đa chiếu sáng cho bài toán nhận dạng khuôn mặt \cite{qing2004face}.
+\end{frame}
+
+% --- Slide 2: Kỹ thuật ảnh tỷ lệ ---
+\begin{frame}{Kỹ thuật ảnh tỷ lệ}
+    \begin{block}{Nguyên lý Lambertian}
+        Cường độ sáng tại bề mặt: $I = \rho\, E(\mathbf{n})$.
+    \end{block}
+
+    \vspace{0.3cm}
+    Giả sử hai khuôn mặt có albedo $\rho, \rho_1$ dưới cùng pháp tuyến $\mathbf{n}$, tỷ lệ cường độ giữa hai điều kiện chiếu sáng là \textbf{bất biến}:
+    \begin{equation}
+        \frac{I_1}{I} = \frac{I'_1}{I'}
+        \;\;\Longrightarrow\;\;
+        I'_1 = I' \cdot \frac{I_1}{I}.
+    \end{equation}
+
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item Cho phép mượn thông tin chiếu sáng của người thứ nhất để "đắp" sang người thứ hai.
+        \item \textbf{Hạn chế:} Yêu cầu ảnh tham chiếu dưới nhiều điều kiện sáng khác nhau hoặc một cơ sở dữ liệu quy mô lớn.
+    \end{itemize}
+\end{frame}
+
+% --- Slide 3: Spherical Harmonics -- Khai triển ---
+\begin{frame}{Thay đổi ánh sáng từ một ảnh đơn}
+    Wen et al. \cite{wen2003face} đề xuất khai triển hàm cường độ bức xạ (\textit{irradiance}) bằng 9 hàm cơ sở Spherical Harmonics (SH) bậc thấp:
+    \begin{equation}
+        E(\mathbf{n}) \approx \sum_{\substack{l \le 2 \\ -l \le m \le l}} \hat{A}_l\, L_{lm}\, Y_{lm}(\mathbf{n}).
+    \end{equation}
+
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item Khai thác tính chất: Da mặt con người chủ yếu chứa thành phần \textit{albedo trung bình} ($\rho_{00}$), gần như không có thành phần tần số thấp.
+        \item Giải hệ phương trình bình phương tối thiểu tuyến tính để tìm 9 hệ số cơ sở.
+        \item \textbf{Kết quả:} Trích xuất thành công bản đồ bức xạ $I_s(\mathbf{n}) = \bar{\rho}\, E(\mathbf{n})$ từ chỉ một ảnh đầu vào.
+    \end{itemize}
+\end{frame}
+
+% --- Slide 4: Tái chiếu sáng và kết quả ---
+\begin{frame}{Tái chiếu sáng bằng ảnh tỷ lệ}
+    \begin{columns}
+        \begin{column}{0.45\textwidth}
+            Khi khuôn mặt chuyển động xoay ($\mathbf{n} \to \mathbf{n}'$), cường độ sáng được cập nhật tự nhiên:
+            \begin{equation*}
+                I'_f = I_f \cdot \frac{I_s(\mathbf{n}')}{I_s(\mathbf{n})}.
+            \end{equation*}
+            \vspace{0.2cm}
+            \begin{itemize}
+                \item \textbf{Ưu điểm:} Ảnh tổng hợp duy trì được tính chân thực cao.
+                \item Sai khác nhỏ chỉ xuất hiện ở vùng phản xạ gương (tính non-Lambertian của da) \cite{marschner1999skin}.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \includegraphics[width=0.9\linewidth]{img/Fig.20.7.png}
+                \caption{So sánh ảnh tổng hợp (dưới) và ảnh thực tế (trên) \cite{wen2003face}.}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% --- Slide 5: Chỉnh sửa chiếu sáng ---
+\begin{frame}{Chỉnh sửa chiếu sáng}
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            Can thiệp trực tiếp vào các hệ số SH cho phép:
+            \begin{itemize}
+                \item Thêm bóng đổ.
+                \item Đổi góc sáng.
+                \item Thay đổi sắc độ màu.
+            \end{itemize}
+            \vspace{0.3cm}
+            Khả năng sinh dữ liệu đa dạng này hỗ trợ đắc lực cho các bài toán phân tích khuôn mặt.
+        \end{column}
+        \begin{column}{0.55\textwidth}
+            \begin{figure}
+                \centering
+                \includegraphics[width=\linewidth]{img/Fig.20.8.png}
+                \caption{Chỉnh sửa sáng bằng cách thay đổi hệ số SH \cite{wen2003face}.}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% --- Slide 6: Ứng dụng nhận dạng ---
+\begin{frame}{Ứng dụng cho nhận dạng khuôn mặt}
+    Qing et al. \cite{qing2004face} ứng dụng kỹ thuật này làm bước tiền xử lý chuẩn hóa hình ảnh:
+
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item Khôi phục khuôn mặt về \textbf{chiếu sáng chuẩn hóa}: chỉ giữ lại thành phần hằng số $x_{00}$, triệt tiêu các hệ số SH khác.
+        \item Dùng kỹ thuật ảnh tỷ lệ để nội suy ảnh dưới điều kiện sáng đồng nhất này.
+        \item Quá trình đối sánh được thực hiện trên ảnh đã chuẩn hóa.
+    \end{itemize}
+
+    \vspace{0.5cm}
+    \begin{alertblock}{Kết quả thực nghiệm}
+        Thử nghiệm trên cơ sở dữ liệu PIE \cite{sim2003pie} cho thấy Face Relighting giúp cải thiện đáng kể độ chính xác và tính bền vững của các hệ thống nhận dạng.
+    \end{alertblock}
 \end{frame}
