@@ -19,7 +19,7 @@ accelerate launch src/train_text_to_image_lora.py \
 - [ ] Continue fine-tuning on the CelebA-HQ and FFHQ
 - [X] Use this tool (https://github.com/lingjivoo/OpenGraphAU) generate facial action units 
 - [X] Train the AU-Adapter
-- [ ] Inference
+- [X] Inference
 - [ ] Table 5. Ablation study on AU injection and semantic guidance (SG) on both generation quality and supervised learning. SD denotes Stable Diffusion, which is used as a baseline.
 - [ ] Figure 5. Example of generated samples: Stable Diffusion, +FEText, +FEText+FAUs, +FEText+FAUs+SG.
 - [ ] Table 1. Generation quality comparisons. Ours vs.’ shows the proportion of users who prefer our method over the alternative. An MPS above 1.00 and results above 50% in the user study indicate SynFER outplays the counterpart. FS, FER Acc., FAU Acc., EA and FF denote FaceScore, FER accuracy, facial action unit accuracy, expression alignment and face fidelity, respectively.
