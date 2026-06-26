@@ -25,3 +25,4 @@ report/outputs/
 *.pdf
 slide/indent.log
 report/indent.log
+backend/static/*

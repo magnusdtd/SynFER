@@ -1,4 +1,5 @@
 import argparse
+import fcntl
 import glob
 import json
 import os
@@ -15,14 +16,14 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from tqdm import tqdm
 
-from au_adapter import AUProjModel
-from ip_adapter.attention_processor import AttnProcessor2_0 as AttnProcessor
-from ip_adapter.attention_processor import IPAttnProcessor2_0 as IPAttnProcessor
 from OpenGraphAU.model.MEFL import MEFARG
 from OpenGraphAU.utils import image_eval
 from OpenGraphAU.utils import load_state_dict as og_load_state_dict
 from POSTER_V2.models.PosterV2 import pyramid_trans_expr2
 
+from .au_adapter import AUProjModel
+from .ip_adapter.attention_processor import AttnProcessor2_0 as AttnProcessor
+from .ip_adapter.attention_processor import IPAttnProcessor2_0 as IPAttnProcessor
 from .utils import set_seed
 
 
@@ -264,6 +265,27 @@ def ddim_inversion(pipe, unet, au_proj_model, latent, text_embeddings, num_steps
     return z
 
 
+def load_tracker(tracker_path):
+    if not os.path.exists(tracker_path):
+        return set()
+    with open(tracker_path) as f:
+        try:
+            fcntl.flock(f, fcntl.LOCK_SH)
+            return set(line.strip() for line in f if line.strip())
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
+
+
+def append_to_tracker(tracker_path, lines):
+    with open(tracker_path, "a") as f:
+        try:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            for line in lines:
+                f.write(line + "\n")
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
+
+
 def main():
     args = parse_args()
 
@@ -344,14 +366,31 @@ def main():
     if args.limit is not None and args.limit > 0:
         if accelerator.is_main_process:
             print(f"Limiting evaluation to {args.limit} random samples.")
-        random.shuffle(source_files)
+        rng = random.Random(args.seed)
+        rng.shuffle(source_files)
         source_files = source_files[: args.limit]
 
     if accelerator.is_main_process:
-        print(f"Total source images to process: {len(source_files)}")
         os.makedirs(args.output_dir, exist_ok=True)
         for category in class_mapping.keys():
             os.makedirs(os.path.join(args.output_dir, category), exist_ok=True)
+    accelerator.wait_for_everyone()
+
+    tracker_path = os.path.join(args.output_dir, "processed_tracker.txt")
+    target_identifiers = set(f"{cat}/{os.path.basename(f)}" for f, cat in source_files)
+
+    processed_set = load_tracker(tracker_path)
+    if len(processed_set) > 0:
+        original_count = len(source_files)
+        source_files = [(f, cat) for f, cat in source_files if f"{cat}/{os.path.basename(f)}" not in processed_set]
+        if accelerator.is_main_process:
+            print(
+                f"Automatically resuming: skipped {original_count - len(source_files)} "
+                f"already generated images. {len(source_files)} remaining."
+            )
+
+    if accelerator.is_main_process:
+        print(f"Total source images to process: {len(source_files)}")
 
     # Prepare custom Dataset and DataLoader with preloading
     dataset = AffectNetEvalDataset(source_files, sd_transform, og_transform, class_mapping)
@@ -492,11 +531,14 @@ def main():
             generated_img = generated_img.cpu().permute(0, 2, 3, 1).numpy()
             generated_img = (generated_img * 255).round().astype(np.uint8)
 
+            saved_identifiers = []
             for b in range(batch_size):
                 out_img = Image.fromarray(generated_img[b])
                 img_basename = os.path.basename(img_paths[b])
                 out_img_path = os.path.join(args.output_dir, categories[b], img_basename)
                 out_img.save(out_img_path)
+                saved_identifiers.append(f"{categories[b]}/{img_basename}")
+            append_to_tracker(tracker_path, saved_identifiers)
 
     # 7. Evaluate Metrics
     # Ensure all processes finish generation before main process evaluates metrics
@@ -504,6 +546,13 @@ def main():
 
     if accelerator.is_main_process:
         print("\nGeneration finished. Calculating metrics...")
+
+        # Delete tracker file if all target images have been generated
+        final_processed = load_tracker(tracker_path)
+        if target_identifiers.issubset(final_processed):
+            if os.path.exists(tracker_path):
+                os.remove(tracker_path)
+                print(f"All {len(target_identifiers)} images generated. Processed tracker file deleted.")
 
         # 7.1 FID Calculation
         print("Calculating FID score...")
