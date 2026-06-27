@@ -605,6 +605,27 @@ def main():
             acc_cat = (correct_cat / total_cat) * 100 if total_cat > 0 else 0
             print(f"  {category}: {acc_cat:.2f}% ({correct_cat}/{total_cat})")
 
+        # 7.3 HPSv2 Score Calculation
+        print("Calculating HPSv2 score...")
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        import HPSv2
+
+        hps_scores = {k: [] for k in class_mapping.keys()}
+        for f, category in tqdm(synthetic_files, desc="Evaluating HPSv2"):
+            prompt = prompt_templates[category]
+            score_list = HPSv2.score(f, prompt)
+            hps_scores[category].extend(score_list)
+        
+        overall_hps = float(np.mean([s for scores in hps_scores.values() for s in scores])) if len(synthetic_files) > 0 else 0.0
+        print(f"\nOverall HPSv2 on Synthetic Dataset: {overall_hps:.4f}")
+        print("Class-wise HPSv2 scores:")
+        class_hps_dict = {}
+        for category in class_mapping.keys():
+            avg_score = float(np.mean(hps_scores[category])) if len(hps_scores[category]) > 0 else 0.0
+            class_hps_dict[category] = avg_score
+            print(f"  {category}: {avg_score:.4f}")
+
         # Save validation results JSON
         results_path = os.path.join(args.output_dir, "validation_results.json")
         results = {
@@ -613,6 +634,8 @@ def main():
             "class_accuracies": {
                 k: (class_correct[k] / class_total[k] * 100 if class_total[k] > 0 else 0) for k in class_mapping.keys()
             },
+            "overall_hps": overall_hps,
+            "class_hps": class_hps_dict,
             "parameters": vars(args),
         }
         with open(results_path, "w") as f:

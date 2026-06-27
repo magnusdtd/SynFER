@@ -63,3 +63,5 @@ NEXT_PUBLIC_BACKEND_URL="http://your-remote-ip:8000" npm run dev
  - [POSTER++](https://github.com/Talented-Q/POSTER_V2)
  - [clean-fid for Evaluating Generative Models](https://github.com/GaParmar/clean-fid)
  - [HPSv2](https://github.com/tgxs002/HPSv2)
+ - [MPS](https://github.com/Kwai-Kolors/MPS)
+ - [FaceScore](https://github.com/OPPO-Mente-Lab/FaceScore)
