@@ -637,6 +637,109 @@ def main():
             class_hps_dict[category] = avg_score
             print(f"  {category}: {avg_score:.4f}")
 
+        # 7.4 MPS Score Calculation
+        print("Calculating MPS score...")
+        mps_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "MPS")
+        if mps_dir not in sys.path:
+            sys.path.append(mps_dir)
+
+        from torch import einsum
+        from transformers import AutoTokenizer, CLIPImageProcessor
+
+        processor_name_or_path = "laion/CLIP-ViT-H-14-laion2B-s32B-b79K"
+        mps_image_processor = CLIPImageProcessor.from_pretrained(processor_name_or_path)
+        mps_tokenizer = AutoTokenizer.from_pretrained(processor_name_or_path, trust_remote_code=True)
+
+        mps_model_path = "models/MPS/MPS_overall_checkpoint.pth"
+        
+        # Patch transformers to load old checkpoints
+        import transformers.models.clip.modeling_clip
+        if not hasattr(transformers.models.clip.modeling_clip, 'CLIPTextTransformer'):
+            transformers.models.clip.modeling_clip.CLIPTextTransformer = transformers.models.clip.modeling_clip.CLIPTextModel
+        if not hasattr(transformers.models.clip.modeling_clip, 'CLIPVisionTransformer'):
+            transformers.models.clip.modeling_clip.CLIPVisionTransformer = transformers.models.clip.modeling_clip.CLIPVisionModel
+            
+        mps_model = torch.load(mps_model_path, map_location="cpu", weights_only=False)
+        
+        # Patch configurations of unpickled model modules to add missing attributes
+        for module in mps_model.modules():
+            if hasattr(module, 'config'):
+                if not hasattr(module.config, '_output_attentions'):
+                    module.config._output_attentions = False
+                if not hasattr(module.config, '_return_dict'):
+                    module.config._return_dict = False
+                if not hasattr(module.config, '_attn_implementation_internal'):
+                    module.config._attn_implementation_internal = "eager"
+            
+            if type(module).__name__ in ['CLIPTextModel', 'CLIPTextTransformer']:
+                if not hasattr(module, 'eos_token_id'):
+                    if hasattr(module, 'config') and hasattr(module.config, 'eos_token_id'):
+                        module.eos_token_id = module.config.eos_token_id
+                    else:
+                        module.eos_token_id = 2
+
+        mps_model.eval().to(device)
+
+        def infer_one_sample_mps(image_path, prompt):
+            def _process_image(img_path):
+                img = Image.open(img_path).convert("RGB")
+                pixel_values = mps_image_processor(img, return_tensors="pt")["pixel_values"]
+                return pixel_values
+
+            def _tokenize(caption):
+                input_ids = mps_tokenizer(
+                    caption,
+                    max_length=mps_tokenizer.model_max_length,
+                    padding="max_length",
+                    truncation=True,
+                    return_tensors="pt",
+                ).input_ids
+                return input_ids
+
+            image_input = _process_image(image_path).to(device)
+            text_input = _tokenize(prompt).to(device)
+            condition = "light, color, clarity, tone, style, ambiance, artistry, shape, face, hair, hands, limbs, structure, instance, texture, quantity, attributes, position, number, location, word, things."
+            condition_batch = _tokenize(condition).repeat(text_input.shape[0], 1).to(device)
+
+            with torch.no_grad():
+                text_f, text_features = mps_model.model.get_text_features(text_input)
+
+                image_f = mps_model.model.get_image_features(image_input.half())
+                condition_f, _ = mps_model.model.get_text_features(condition_batch)
+
+                sim_text_condition = einsum("b i d, b j d -> b j i", text_f, condition_f)
+                sim_text_condition = torch.max(sim_text_condition, dim=1, keepdim=True)[0]
+                sim_text_condition = sim_text_condition / sim_text_condition.max()
+                mask = torch.where(sim_text_condition > 0.3, 0, float("-inf"))
+                mask = mask.repeat(1, image_f.shape[1], 1)
+                image_features = mps_model.cross_model(image_f, text_f, mask.half())[:, 0, :]
+
+                image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+                text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+                image_score = mps_model.logit_scale.exp() * text_features @ image_features.T
+            return image_score[0].item()
+
+        mps_scores = {k: [] for k in class_mapping.keys()}
+        for f, category in tqdm(synthetic_files, desc="Evaluating MPS"):
+            prompt = prompt_templates[category]
+            score = infer_one_sample_mps(f, prompt)
+            mps_scores[category].append(score)
+
+        overall_mps = (
+            float(np.mean([s for scores in mps_scores.values() for s in scores])) if len(synthetic_files) > 0 else 0.0
+        )
+        print(f"\nOverall MPS on Synthetic Dataset: {overall_mps:.4f}")
+        print("Class-wise MPS scores:")
+        class_mps_dict = {}
+        for category in class_mapping.keys():
+            avg_score = float(np.mean(mps_scores[category])) if len(mps_scores[category]) > 0 else 0.0
+            class_mps_dict[category] = avg_score
+            print(f"  {category}: {avg_score:.4f}")
+
+        # Free memory
+        del mps_model
+        torch.cuda.empty_cache()
+
         # Save validation results JSON
         results_path = os.path.join(args.output_dir, "validation_results.json")
         results = {
@@ -647,6 +750,8 @@ def main():
             },
             "overall_hps": overall_hps,
             "class_hps": class_hps_dict,
+            "overall_mps": overall_mps,
+            "class_mps": class_mps_dict,
             "parameters": vars(args),
         }
         with open(results_path, "w") as f:

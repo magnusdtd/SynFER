@@ -27,3 +27,4 @@ slide/indent.log
 report/indent.log
 backend/static/*
 SynFER_paper_source_code/*
+!MPS/trainer/models/
