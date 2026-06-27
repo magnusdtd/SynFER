@@ -237,14 +237,17 @@ def load_poster_v2(device):
 def ddim_inversion(pipe, unet, au_proj_model, latent, text_embeddings, num_steps=50, invert_steps=35):
     # Set the DDIM scheduler timesteps
     pipe.scheduler.set_timesteps(num_steps)
-    timesteps = reversed(pipe.scheduler.timesteps)  # from 0 to 999
+    full_timesteps = list(reversed(pipe.scheduler.timesteps))  # from 0 to 999
 
-    # We only invert up to invert_steps
-    timesteps = list(timesteps)[:invert_steps]
+    # The denoising loop starts at: pipe.scheduler.timesteps[len(pipe.scheduler.timesteps) - invert_steps]
+    start_denoise_t = pipe.scheduler.timesteps[len(pipe.scheduler.timesteps) - invert_steps]
 
     z = latent.clone()
     batch_size = z.shape[0]
-    for i, t in enumerate(timesteps):
+    for i, t in enumerate(full_timesteps):
+        if t >= start_denoise_t:
+            break
+
         # Construct neutral prompt + zero AU condition for the entire batch
         zero_au = torch.zeros((batch_size, 41), device=z.device, dtype=z.dtype)
         au_token = au_proj_model(zero_au)
@@ -255,7 +258,7 @@ def ddim_inversion(pipe, unet, au_proj_model, latent, text_embeddings, num_steps
 
         # DDIM forward step calculation
         alpha_prod_t = pipe.scheduler.alphas_cumprod[t]
-        t_next = timesteps[i + 1] if i < len(timesteps) - 1 else pipe.scheduler.timesteps[0]
+        t_next = full_timesteps[i + 1]
         alpha_prod_t_next = pipe.scheduler.alphas_cumprod[t_next]
 
         # DDIM inversion formula
@@ -296,7 +299,11 @@ def main():
     # Set seed based on rank to keep processes diversified if needed, or deterministic
     set_seed(args.seed + accelerator.process_index)
 
-    weight_dtype = torch.float16
+    weight_dtype = torch.float32
+    if accelerator.mixed_precision == "fp16":
+        weight_dtype = torch.float16
+    elif accelerator.mixed_precision == "bf16":
+        weight_dtype = torch.bfloat16
 
     if accelerator.is_main_process:
         print(f"Loading Base SD model from {args.base_model_dir}...")
@@ -505,8 +512,9 @@ def main():
                 loss = F.cross_entropy(logits, target_label_tensor)
 
                 grads = torch.autograd.grad(loss, text_embeddings_grad)[0]
-                grads_norm = grads / (torch.norm(grads, p=2, dim=-1, keepdim=True) + 1e-8)
-                text_embeddings = text_embeddings - args.sg_step_size * grads_norm
+                grads_fp32 = grads.to(torch.float32)
+                grads_norm = grads_fp32 / (torch.norm(grads_fp32, p=2, dim=-1, keepdim=True) + 1e-8)
+                text_embeddings = text_embeddings - args.sg_step_size * grads_norm.to(text_embeddings.dtype)
 
             # Standard CFG denoising step with updated embeddings
             with torch.no_grad():
@@ -528,7 +536,7 @@ def main():
         with torch.no_grad():
             generated_img = pipe.vae.decode(z / pipe.vae.config.scaling_factor).sample
             generated_img = (generated_img / 2 + 0.5).clamp(0, 1)
-            generated_img = generated_img.cpu().permute(0, 2, 3, 1).numpy()
+            generated_img = generated_img.to(torch.float32).cpu().permute(0, 2, 3, 1).numpy()
             generated_img = (generated_img * 255).round().astype(np.uint8)
 
             saved_identifiers = []
@@ -608,6 +616,7 @@ def main():
         # 7.3 HPSv2 Score Calculation
         print("Calculating HPSv2 score...")
         import sys
+
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         import HPSv2
 
@@ -616,8 +625,10 @@ def main():
             prompt = prompt_templates[category]
             score_list = HPSv2.score(f, prompt)
             hps_scores[category].extend(score_list)
-        
-        overall_hps = float(np.mean([s for scores in hps_scores.values() for s in scores])) if len(synthetic_files) > 0 else 0.0
+
+        overall_hps = (
+            float(np.mean([s for scores in hps_scores.values() for s in scores])) if len(synthetic_files) > 0 else 0.0
+        )
         print(f"\nOverall HPSv2 on Synthetic Dataset: {overall_hps:.4f}")
         print("Class-wise HPSv2 scores:")
         class_hps_dict = {}
