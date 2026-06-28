@@ -1,32 +1,43 @@
 # ___***[ICCV'25] SynFER: Towards Boosting Facial Expression Recognition with Synthetic Data (Reproduced version)***___
 
-This repo aims to reproduce the result in the [SynFER](https://openaccess.thecvf.com/content/ICCV2025/papers/He_SynFER_Towards_Boosting_Facial_Expression_Recognition_with_Synthetic_Data_ICCV_2025_paper.pdf) paper.
+This repository aims to reproduce the results in the [SynFER](https://openaccess.thecvf.com/content/ICCV2025/papers/He_SynFER_Towards_Boosting_Facial_Expression_Recognition_with_Synthetic_Data_ICCV_2025_paper.pdf) paper.
 
-## Training Command: 
+> **Final Project: Pattern Recognition**
+> Tech Stack: PyTorch · FastAPI · Next.js · Stable Diffusion · Diffusers
+
+![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white) ![PyTorch](https://img.shields.io/badge/PyTorch-2.7+-EE4C2C?logo=pytorch&logoColor=white) ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white) ![Next.js](https://img.shields.io/badge/Next.js-14-000000?logo=next.js&logoColor=white) ![LaTeX](https://img.shields.io/badge/LaTeX-Project-008080?logo=latex&logoColor=white) ![Hugging Face](https://img.shields.io/badge/Hugging_Face-Diffusers-FFD21E?logo=huggingface&logoColor=black)
+
+---
+
+## Installation
+Install [uv](https://docs.astral.sh/uv/) then run:
 ```bash
-accelerate launch src/train_text_to_image_lora.py \
-  --pretrained_model_name_or_path="CompVis/stable-diffusion-v1-4" \
-  --dataset_name="fetext" \
-  --train_data_dir="/media/ltnghia34/SynFER/datasets" \
-  --resolution=512 \
-  --train_batch_size=1 \
-  --learning_rate=1e-04 \
-  --output_dir="sd-sfew-model"
+uv sync
 ```
 
-## To-Do list:
+## Training and Evaluating Commands
+
+Run the following commands to LoRA fine-tune Stable Diffusion v1.5 and train the AU Adapter:
+```bash
+./scripts/train_lora.sh
+./scripts/train_au_adapter.sh
+```
+
+Run the following command to evaluate the model:
+```bash
+./scripts/evaluate_synfer.sh
+```
+
+You can adjust the memory usage, path, ... by modifying these Bash scripts.
+
+## To-Do list
 - [X] Fine-tuning SD on the FEText dataset
-- [ ] Continue fine-tuning on the CelebA-HQ and FFHQ
-- [X] Use this tool (https://github.com/lingjivoo/OpenGraphAU) generate facial action units 
+- [X] Continue fine-tuning on the CelebA-HQ and FFHQ
+- [X] Use this tool (https://github.com/lingjivoo/OpenGraphAU) to generate facial action units 
 - [X] Train the AU-Adapter
 - [X] Inference
-- [ ] Table 5. Ablation study on AU injection and semantic guidance (SG) on both generation quality and supervised learning. SD denotes Stable Diffusion, which is used as a baseline.
-- [ ] Figure 5. Example of generated samples: Stable Diffusion, +FEText, +FEText+FAUs, +FEText+FAUs+SG.
-- [ ] Table 1. Generation quality comparisons. Ours vs.’ shows the proportion of users who prefer our method over the alternative. An MPS above 1.00 and results above 50% in the user study indicate SynFER outplays the counterpart. FS, FER Acc., FAU Acc., EA and FF denote FaceScore, FER accuracy, facial action unit accuracy, expression alignment and face fidelity, respectively.
-- [ ] Demo web app có controller để viết câu prompt + set FAUs
-
-## Notes:
-- Diffusers' EMMAAModel
+- [X] Table 1: Generation quality comparisons
+- [X] Demo web application with a controller for writing prompts and setting FAUs
 
 ## Running the Demo Web Application
 
@@ -55,6 +66,10 @@ If your backend is running on a different port or host (e.g. on a remote server)
 ```bash
 NEXT_PUBLIC_BACKEND_URL="http://your-remote-ip:8000" npm run dev
 ```
+
+## Demo video
+
+[![Demo Video](https://img.youtube.com/vi/gp4ISudSgzY/0.jpg)](https://youtu.be/gp4ISudSgzY)
 
 ## Resources:
  - [SynFER](https://github.com/C0notSilly/SynFER)

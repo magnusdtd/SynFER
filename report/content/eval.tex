@@ -1,12 +1,13 @@
 \section{Đánh giá cá nhân và Đề xuất cải tiến}
 
 \subsection{Điểm mạnh kỹ thuật}
-
+Phương pháp SynFER nổi bật nhờ sự chuyển đổi hệ tư tưởng từ việc điều chỉnh hình học lưới điểm trực tiếp sang quá trình sinh ảnh dựa trên Diffusion. Bằng cách kết hợp linh hoạt khả năng điều khiển không gian của Facial Action Units và Semantic Guidance, mô hình có thể giải quyết hiệu quả hiện tượng méo dạng hình học vốn là điểm nghẽn của các phương pháp warping trước đây. Bên cạnh đó, việc sử dụng các mạng được tinh chỉnh theo cơ chế LoRA giúp duy trì độ chi tiết về định danh của khuôn mặt nguồn trong khi chỉ tiêu tốn một lượng nhỏ tham số huấn luyện bổ sung.
 
 \subsection{Hạn chế kỹ thuật và giả định bài toán}
-
+Một hạn chế đáng kể của SynFER là việc phụ thuộc lớn vào chất lượng của mô-đun trích xuất đặc trưng biểu cảm và nhãn Facial Action Units. Nếu hệ thống phân tích ban đầu đưa ra các đặc trưng không chuẩn xác, sai số này sẽ lan truyền qua toàn bộ quá trình sinh ảnh của mạng khuếch tán. Hơn thế nữa, tính toán suy luận bằng Diffusion vẫn đòi hỏi chi phí phần cứng và thời gian thực thi rất cao so với các hệ thống đồ họa lưới điểm truyền thống, khiến cho khả năng ứng dụng ở thời gian thực trở nên cực kỳ khó khăn.
 
 \subsection{Góc nhìn cá nhân và tính thực tiễn}
-
+Từ góc độ thực tiễn, việc xây dựng một bộ dữ liệu lớn chứa các biểu cảm đa dạng luôn là bài toán khó do chi phí gán nhãn thủ công cao. Phương pháp tiếp cận tổng hợp dữ liệu để huấn luyện ngược lại mô hình nhận dạng mà SynFER đề xuất có tiềm năng to lớn, đặc biệt trong các dự án khan hiếm dữ liệu. Tuy nhiên, rào cản về việc không thể tái sử dụng trực tiếp các trọng số đã được huấn luyện sẵn của nhóm tác giả đòi hỏi một lượng lớn tài nguyên máy tính để thiết lập lại các thử nghiệm. Dù vậy, chất lượng hình ảnh tổng hợp được vô cùng chân thực và mang lại những lợi ích rõ ràng.
 
 \subsection{Đề xuất cải tiến và phần mở rộng}
+Để giải quyết nhược điểm về thời gian chạy của quy trình tạo ảnh, một hướng tiếp cận đầy triển vọng là tích hợp các kỹ thuật tăng tốc thế hệ mới như Latent Consistency Models (LCM) nhằm giảm số bước khử nhiễu xuống chỉ còn một hoặc vài bước. Ngoài ra, thay vì chỉ giới hạn ở việc sinh ảnh tĩnh, phương pháp có thể được phát triển thêm mô-đun duy trì tính nhất quán thời gian để tổng hợp nên một video biểu cảm hoàn chỉnh. Nhóm cũng đã thử nghiệm thành công khả năng mở rộng của mô hình bằng cách kiểm chứng hiệu năng trên bộ dữ liệu kiểm tra KDEF, minh chứng cho khả năng hoạt động trên đa dạng các loại dữ liệu.

@@ -1,2 +1,14 @@
 \section{Hệ thống Demo minh họa}
 
+Nhằm trực quan hóa khả năng hoạt động của mô hình SynFER, nhóm đã xây dựng một ứng dụng demo toàn diện tích hợp quá trình tổng hợp khuôn mặt ngay trên giao diện người dùng. Hệ thống được phân tách thành hai thành phần chính bao gồm frontend dùng được phát triển bằng NextJS nhằm cung cấp trải nghiệm thao tác mượt mà, và phần backend được xây dựng dựa trên nền tảng FastAPI giúp xử lý nhanh chóng các tác vụ gọi Diffusion.
+
+Hệ thống cho phép người dùng tải lên một bức ảnh khuôn mặt nguồn bất kỳ, sau đó nhập vào một đoạn văn bản mô tả biểu cảm mong muốn. Dữ liệu sẽ được máy chủ tiếp nhận, trích xuất các đặc trưng và sử dụng mô hình SynFER để sinh ra hình ảnh với biểu cảm tương ứng nhưng vẫn giữ nguyên định danh của người trong ảnh gốc. Quá trình xử lý diễn ra trực tiếp và kết quả được trả về hiển thị trên trình duyệt.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{../docs/imgs/demo.png}
+    \caption{Giao diện chính của ứng dụng Demo SynFER.}
+    \label{fig:synfer_demo}
+\end{figure}
+
+Giao diện ứng dụng trong Hình \ref{fig:synfer_demo} được thiết kế trực quan và thân thiện. Khu vực hiển thị bên trái cho phép người dùng tải lên và quan sát hình ảnh khuôn mặt nguồn, đồng thời cung cấp một menu dạng thả xuống chứa các loại biểu cảm đa dạng (như vui vẻ, buồn bã, ngạc nhiên, tức giận). Người dùng có thể chủ động tải lên hình ảnh mong muốn qua nút chức năng tương ứng và ra lệnh cho hệ thống bắt đầu quá trình tạo ảnh bằng cách nhấn nút xác nhận. Ở khu vực bên phải, hệ thống sẽ trả về và hiển thị hình ảnh khuôn mặt sau khi đã được mô hình tinh chỉnh biểu cảm thành công. Các đường nét sinh trắc học đặc trưng và bối cảnh của người trong ảnh gốc đều được bảo toàn. Toàn bộ quy trình hoạt động diễn ra liền mạch, mang lại cho người dùng cái nhìn đối chiếu trực quan và rõ ràng nhất về khả năng biến đổi linh hoạt của mô hình.

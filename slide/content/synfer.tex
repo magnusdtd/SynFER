@@ -16,21 +16,19 @@
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Kiến trúc kỹ thuật chi tiết}
-    \textbf{Tập dữ liệu lai ghép FEText:} Xây dựng từ các tập dữ liệu chất lượng cao, đồng bộ hóa độ phân giải và sử dụng mô hình ngôn ngữ lớn đa phương thức để sinh tự động mô tả chi tiết.
-
-    \textbf{Kiểm soát bằng FAU:}
-    \begin{itemize}
-        \item Ánh xạ các nhãn FAU (đại diện cho chuyển động cơ mặt) thành đặc trưng không gian.
-        \item Tiêm vào mô hình Diffusion thông qua cơ chế chú ý chéo tách biệt.
-    \end{itemize}
-
-    \textbf{Semantic Guidance trong khử nhiễu:}
-    \begin{itemize}
-        \item Áp dụng khởi tạo bố cục bằng cách đảo ngược ảnh gốc thành nhiễu $x_T^s$.
-        \item Lan truyền ngược sai số từ mạng phân loại biểu cảm để cập nhật vector đặc trưng văn bản $c^{\text{text}}$.
-        \item Ép buộc ảnh sinh ra ở các bước cuối bám sát chính xác cảm xúc mục tiêu.
-    \end{itemize}
+\begin{frame}{Mô hình Diffusion}
+    Quá trình thêm nhiễu:
+    \begin{equation*}
+        x_t = \sqrt{\alpha_t}x_0 + \sqrt{1-\alpha_t}\epsilon
+    \end{equation*}
+    Quá trình khử nhiễu:
+    \begin{equation*}
+        x_{t-1} = \frac{\sqrt{\alpha_{t-1}}}{\sqrt{\alpha_{t}}} x_t + \sqrt{\alpha_{t-1}} \left(\sqrt{\frac{1}{\alpha_{t-1}} - 1} - \sqrt{\frac{1}{\alpha_t} -1}\right) \epsilon_{\theta}(x_t, t, c)
+    \end{equation*}
+    Hàm mất mát:
+    \begin{equation*}
+        \min_{\theta} \mathbb{E}_{x_0,\epsilon\sim\mathcal{N}(\mathbf{0},\mathbf{I}),c,t}\|\epsilon-\epsilon_\theta(x_t,c,t)\|_2^2
+    \end{equation*}
 \end{frame}
 
 \begin{frame}{Sơ đồ Pipeline của SynFER}
@@ -39,4 +37,20 @@
         \includegraphics[width=0.85\linewidth]{../SynFER_paper_source_code/sec/imgs/synpipeline.pdf}
         \caption{Quy trình tổng hợp dữ liệu nhận dạng biểu cảm khuôn mặt SynFER.}
     \end{figure}
+\end{frame}
+
+
+\begin{frame}{Các kỹ thuật chi tiết}
+    \begin{itemize}
+        \item \textbf{Tập dữ liệu lai ghép FEText:} Xây dựng từ các tập dữ liệu chất lượng cao, đồng bộ hóa độ phân giải và sử dụng mô hình ngôn ngữ lớn đa phương thức để sinh mô tả.
+              \vspace{0.3cm}
+        \item \textbf{Kiểm soát bằng FAU:} Ánh xạ FAU thành đặc trưng không gian, đưa vào qua decoupled cross-attention.
+              \vspace{0.3cm}
+        \item \textbf{Semantic Guidance trong khử nhiễu:}
+              \begin{align*}
+                  \hat{x}_0             & = \frac{x_t - \sqrt{1-\Bar{\alpha}_t}\epsilon_{\theta}(x_t, t, c^{\text{text}}, c^{\text{au}})}{\sqrt{\Bar{\alpha}_t}}                        \\
+                  \mathcal{L}_{g}       & = -y\log(h(f(\hat{x}_0))_i)                                                                                                                   \\
+                  c^{\text{text}}_{t-1} & = c^{\text{text}}_{t} + \lambda_{g} \frac{ \nabla_{c^{\text{text}}_{t}} \mathcal{L}_{g}} {||\nabla_{c^{\text{text}}_{t}} \mathcal{L}_{g}||_2}
+              \end{align*}
+    \end{itemize}
 \end{frame}

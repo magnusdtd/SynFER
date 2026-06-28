@@ -1,4 +1,4 @@
-\section{Phân tích và Đánh giá}
+\section{Thực nghiệm và Đánh giá}
 \begin{frame}{Đối chiếu phương pháp truyền thống và hiện đại}
     \textbf{Điểm tương đồng:} Đều xoay quanh hệ tư tưởng rằng biểu cảm là kết quả trực tiếp của chuyển động cơ mặt cục bộ.
     \vspace{0.3cm}
@@ -10,3 +10,36 @@
     \end{itemize}
 \end{frame}
 
+\begin{frame}{Quá trình Thực nghiệm}
+    \textbf{Thách thức:} Không có trọng số được chia sẻ sẵn từ tác giả. Tác giả không cugn cấp đầy đủ thông tin về siêu tham số và cách đánh giá mô hình.
+    \vspace{0.3cm}
+
+    \textbf{Triển khai huấn luyện:}
+    \begin{itemize}
+        \item Hệ thống: 2 GPU NVIDIA A100 40GB.
+        \item LoRA fine-tune Stable Diffusion v1.5 (5 epochs).
+        \item Train AU Adapter (5 epochs).
+    \end{itemize}
+    \vspace{0.3cm}
+
+    \textbf{Đánh giá và Mở rộng:}
+    \begin{itemize}
+        \item Inference và evaluate trên tập AffectNet.
+        \item Đánh giá trên bộ dữ liệu KDEF nhằm kiểm chứng tính tổng quát hóa của mô hình trên phân phối dữ liệu mới.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Đánh giá và Cải tiến}
+    \textbf{Điểm mạnh và Hạn chế:}
+    \begin{itemize}
+        \item (+) Giải quyết triệt để lỗi méo dạng của uốn nắn lưới điểm truyền thống. Giữ nguyên định danh tốt.
+        \item (-) Phụ thuộc vào chất lượng trích xuất đặc trưng (FAU) và sinh ảnh chậm.
+    \end{itemize}
+    \vspace{0.3cm}
+
+    \textbf{Đề xuất Cải tiến:}
+    \begin{itemize}
+        \item \textbf{Tăng tốc xử lý:} Tích hợp các kiến trúc rút ngắn bước sinh như Latent Consistency Models (LCM).
+        \item \textbf{Mở rộng:} Bổ sung thêm mô-đun Temporal Attention để có thể tổng hợp chuỗi hoạt hình biểu cảm.
+    \end{itemize}
+\end{frame}

@@ -1,2 +1,38 @@
 \section{Thực nghiệm}
 
+\subsection{Cài đặt thực nghiệm và Metrics}
+Do nhóm tác giả của bài báo SynFER không công bố trọng số đã được huấn luyện trước, nhóm chúng em đã tiến hành huấn luyện lại toàn bộ mô hình từ đầu. Quá trình thực nghiệm được triển khai trên hệ thống máy chủ sử dụng hai card đồ họa NVIDIA A100 40GB. Các siêu tham số được thiết lập bám sát theo bài báo nhằm đảm bảo mức độ tái hiện chính xác nhất đối với phương pháp đề xuất. Để đánh giá chất lượng của mô hình, nhóm sử dụng bốn độ đo chính: FID (Fréchet Inception Distance) nhằm đo lường khoảng cách phân phối giữa ảnh sinh ra và ảnh thực tế, FER Acc (Facial Expression Recognition Accuracy) đánh giá độ chính xác của biểu cảm khuôn mặt sinh ra thông qua mạng phân loại, HPSv2 (Human Preference Score v2) và MPS (Multi-dimensional Preference Score) nhằm đánh giá chất lượng ảnh dựa trên sự ưu tiên nhận thức của con người.
+
+\subsection{Quy trình huấn luyện và đánh giá}
+Toàn bộ quá trình thực nghiệm được chia thành các giai đoạn nối tiếp nhau thông qua các tập tin chạy được cấu hình sẵn. Giai đoạn đầu tiên tập trung vào việc tinh chỉnh mô hình nền tảng Stable Diffusion thông qua cơ chế Low-Rank Adaptation (LoRA) trên tập dữ liệu FEText, sử dụng tập tin huấn luyện \texttt{train\_lora.sh}. Mô hình được huấn luyện trong năm epochs với batch size là 32 và tốc độ học $10^{-4}$. Ngay sau khi hoàn thành huấn luyện LoRA, giai đoạn tiếp theo là huấn luyện mô-đun AU Adapter nhằm tích hợp thông tin điều khiển từ Action Units thông qua tập tin \texttt{train\_au\_adapter.sh}. Mô-đun này cũng được huấn luyện trên cùng tập dữ liệu FEText trong năm epochs với batch size giảm xuống còn 16 để tránh lỗi Out-of-Memory.
+
+\subsection{Inference Pipeline}
+Quá trình đánh giá được thực hiện qua luồng suy luận phức tạp trong \texttt{evaluate\_synfer.py}. Ban đầu, hệ thống tải mô hình Stable Diffusion đã tinh chỉnh cùng với trọng số AU Adapter, mô hình OpenGraphAU (để trích xuất FAU) và mô hình phân loại POSTER\_V2. Đối với mỗi ảnh đầu vào, hệ thống thực hiện quá trình DDIM Inversion để tìm ra latent ban đầu chứa thông tin định danh của người trong ảnh. Tiếp theo, trong vòng lặp khử nhiễu, kỹ thuật Semantic Guidance được áp dụng: mô hình sử dụng POSTER\_V2 để đánh giá hình ảnh sinh ra ở các bước trung gian, tính toán sai số phân loại và lan truyền ngược để cập nhật lại các vector đặc trưng văn bản, từ đó ép bức ảnh hội tụ đúng về cảm xúc mục tiêu. Hình ảnh cuối cùng được giải mã và lưu lại để tính toán các độ đo.
+
+\subsection{Phần mở rộng trên tập dữ liệu KDEF}
+Nhằm đánh giá sâu hơn khả năng tổng quát hóa của mô hình, nhóm đã thực hiện một phần mở rộng bằng cách áp dụng mô hình SynFER vừa được huấn luyện để tổng hợp biểu cảm và chạy kiểm chứng trên tập dữ liệu KDEF (Karolinska Directed Emotional Faces) thông qua tập tin \texttt{evaluate\_synfer\_kdef.sh}. KDEF là một bộ dữ liệu chuẩn mực trong nghiên cứu y học và tâm lý học, bao gồm các bức ảnh biểu cảm từ nhiều góc độ khác nhau của con người trong điều kiện môi trường được kiểm soát chặt chẽ. Việc áp dụng phương pháp trên một tập dữ liệu không nằm trong thực nghiệm của bài báo gốc giúp khẳng định thêm tính linh hoạt của mô hình khi đối mặt với những dữ liệu khuôn mặt có phân phối khác biệt.
+
+\subsection{Kết quả và So sánh}
+Bảng kết quả dưới đây tổng hợp hiệu năng của mô hình do nhóm huấn luyện trên cả hai tập AffectNet và KDEF, đồng thời đối chiếu với các con số được báo cáo trong bài báo gốc (Table 1 của bài báo).
+
+\begin{table}[htbp]
+    \caption{So sánh kết quả sinh ảnh của mô hình SynFER do nhóm tái hiện lại với các phương pháp trong bài báo gốc.}
+    \label{tab:exp_results}
+    \centering
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Phương pháp}              & \textbf{FID} ($\downarrow$) & \textbf{FER Acc.} ($\uparrow$) & \textbf{HPSv2} ($\uparrow$) & \textbf{MPS} ($\downarrow$) \\
+        \midrule
+        Stable Diffusion                  & 88.40                       & 20.06\%                        & 0.263                       & 2.00                        \\
+        PixelArt                          & 145.23                      & 15.52\%                        & 0.271                       & 5.26                        \\
+        PlayGround                        & 81.76                       & 21.56\%                        & 0.265                       & 3.73                        \\
+        FineFace                          & 74.61                       & 38.05\%                        & 0.268                       & 1.48                        \\
+        SynFER (Bài báo gốc)              & 16.32                       & 55.14\%                        & 0.280                       & 0.50                        \\
+        \midrule
+        \textbf{SynFER (Our - AffectNet)} & 58.13                       & 88.90\%                        & 0.271                       & 5.76                        \\
+        \textbf{SynFER (Our - KDEF)}      & 67.96                       & 95.81\%                        & 0.272                       & 5.90                        \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Qua Bảng \ref{tab:exp_results}, có thể thấy kết quả tái hiện có sự chênh lệch so với bài báo gốc. Chỉ số FID và MPS của nhóm kém hơn đáng kể so với bản gốc do mô hình chỉ được huấn luyện lại trong 5 epochs với nguồn tài nguyên máy tính hạn chế, dẫn đến việc mạng chưa hội tụ hoàn toàn và chất lượng ảnh sinh ra (tính chân thực) bị ảnh hưởng. Tuy nhiên, điểm đặc biệt là độ đo FER Acc lại cao bất thường (88.90\% trên AffectNet và 95.81\% trên KDEF so với 55.14\% của bài báo). Lý do chính cho hiện tượng này là trong quá trình áp dụng Semantic Guidance ở luồng suy luận, hệ thống đã sử dụng chính mạng POSTER\_V2 để tối ưu hóa hướng sinh ảnh. Việc sử dụng trùng lặp mạng POSTER\_V2 làm giám khảo đánh giá FER Acc ở khâu cuối cùng đã dẫn đến tình trạng tối ưu hóa quá mức (over-optimization) đối với độ đo này, tạo ra kết quả cao không phản ánh đúng hoàn toàn tính tự nhiên của hình ảnh. Dù vậy, so với các phương pháp cơ sở như Stable Diffusion hay PlayGround, phiên bản SynFER của nhóm vẫn cho thấy các chỉ số HPSv2 tương đương, chứng tỏ khả năng sinh biểu cảm mạnh mẽ của cấu trúc mạng mặc dù thiếu đi sự huấn luyện hoàn chỉnh.
