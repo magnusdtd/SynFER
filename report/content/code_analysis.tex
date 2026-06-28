@@ -1,0 +1,23 @@
+\section{Phân tích kỹ thuật từ mã nguồn}
+
+Dựa trên cấu trúc mã nguồn được cung cấp và cài đặt lại, nhóm đã tiến hành đi sâu vào việc phân tích các thành phần cốt lõi tạo nên thành công của mô hình SynFER. Quá trình sinh ảnh là sự kết hợp chặt chẽ của nhiều mô-đun mạng nhằm mục đích kiểm soát hình ảnh đầu ra một cách chính xác nhất.
+
+\subsection{Xác định các thành phần và cơ sở lý luận}
+
+\paragraph{Mô-đun AU-Adapter}
+Trong mã nguồn, AU-Adapter là một MLP nhỏ, nhận đầu vào là các vector one-hot của FAU và xuất ra các vector đặc trưng không gian. Cơ sở lý luận của việc thiết kế mô-đun này là: mô hình Diffusion gốc thường điều khiển sinh ảnh bằng văn bản, tuy nhiên văn bản mang tính chất toàn cục và rất khó để diễn tả chi tiết sự co rút của từng nhóm cơ nhỏ trên mặt. Việc mã hóa riêng biệt tín hiệu FAU và đưa vào mạng U-Net thông qua cơ chế Decoupled Cross Attention giúp điều khiển chính xác các đặc điểm cục bộ (như nhếch mép, nhíu mày) mà không làm hỏng các trọng số tạo sinh ảnh đã được huấn luyện rất tốt của Stable Diffusion.
+
+\paragraph{Hàm mất mát phân loại và Semantic Guidance}
+Trong vòng lặp khử nhiễu, mã nguồn sử dụng mạng phân loại POSTER\_V2 làm công cụ đánh giá. Tại mỗi bước khử nhiễu $t$, một hàm mất mát phân loại Cross-Entropy $\mathcal{L}_g$ được tính toán giữa nhãn mục tiêu và kết quả dự đoán của mạng POSTER\_V2 trên ảnh đang được sinh ra. Sai số này được lan truyền ngược để cập nhật trực tiếp vào text embeddings. Cơ sở lý luận của tác giả ở đây là giải quyết sự mơ hồ của ngôn ngữ tự nhiên: ranh giới giữa một số cảm xúc (như buồn và sợ hãi) rất mỏng manh. Sử dụng một mô hình nhận dạng chuyên dụng như POSTER\_V2 đóng vai trò như một ``giám khảo'' liên tục nắn chỉnh hướng sinh ảnh về đúng biểu cảm mục tiêu.
+
+\paragraph{Khởi tạo bố cục bằng DDIM Inversion}
+Thay vì sinh ảnh từ một ma trận nhiễu hoàn toàn ngẫu nhiên, mã nguồn sử dụng quá trình DDIM Inversion để chuyển một ảnh gốc $x_0$ thành ma trận nhiễu $x_T$, sau đó mới thực hiện quá trình khử nhiễu. Mục đích của thiết kế này là bảo toàn các thông tin định danh và cấu trúc nền của nhân vật trong ảnh gốc.
+
+\subsection{Phân tích Ablation: Điều gì xảy ra nếu loại bỏ các thành phần?}
+
+Nếu các thành phần này bị tùy chỉnh hoặc loại bỏ, mô hình sẽ gặp phải những sự suy giảm nghiêm trọng về hiệu năng và chất lượng:
+\begin{itemize}
+    \item \textbf{Nếu loại bỏ AU-Adapter:} Hệ thống sẽ hoàn toàn phụ thuộc vào việc điều khiển bằng văn bản. Khi đó, hình ảnh sinh ra sẽ rất chung chung. Chẳng hạn, với cùng một câu mô tả ``người đang cười'', mô hình không thể phân biệt được cười mỉm, cười nhe răng hay cười hở lợi. Mất đi AU-Adapter đồng nghĩa với việc mất đi sự đa dạng và kiểm soát cục bộ đối với dữ liệu biểu cảm được tổng hợp.
+    \item \textbf{Nếu loại bỏ Semantic Guidance:} Quá trình khử nhiễu sẽ tiến triển tự do chỉ theo định hướng văn bản và AU ban đầu. Do đặc tính ngẫu nhiên của Diffusion và sự mơ hồ của văn bản, kết quả sinh ra có thể trượt sang một cảm xúc khác (ví dụ: ảnh dự định sinh ra là `sợ hãi' nhưng lại mang nét `ngạc nhiên'). Điều này trực tiếp làm giảm độ chính xác của các bức ảnh tổng hợp, khiến chúng mất đi giá trị khi được dùng làm dữ liệu huấn luyện cho các mô hình nhận dạng.
+    \item \textbf{Nếu thay thế DDIM Inversion bằng nhiễu ngẫu nhiên thuần túy:} Hình ảnh sinh ra ở mỗi lần chạy sẽ là một khuôn mặt hoàn toàn khác biệt về giới tính, độ tuổi, định danh so với ảnh gốc. Hệ thống sẽ không thể ứng dụng trong các bài toán yêu cầu giữ nguyên đặc điểm sinh trắc học của con người (như chuyển đổi biểu cảm của một người cụ thể).
+\end{itemize}
