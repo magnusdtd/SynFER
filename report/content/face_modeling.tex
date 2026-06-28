@@ -2,17 +2,19 @@
 
 Mô hình hóa khuôn mặt là bài toán tái dựng mô hình 3D của khuôn mặt người từ dữ liệu ảnh 2D. Trong những năm gần đây, lĩnh vực này đã chứng kiến nhiều bước tiến đáng kể \cite{fua1999animated, blanz1999morphable, liu2001rapid}. Các kỹ thuật mô hình hóa khuôn mặt được phân chia thành ba hướng tiếp cận chính tương ứng với loại dữ liệu đầu vào: tái dựng từ chuỗi ảnh, từ hai ảnh trực giao, và từ một ảnh đơn lẻ.
 
-\paragraph{Tái dựng từ chuỗi ảnh.}
-Hướng tiếp cận phổ biến nhất dựa trên chuỗi ảnh đầu vào thường triển khai theo ba giai đoạn: khớp ảnh, tái dựng chuyển động--cấu trúc, và khớp mô hình. Trong giai đoạn khớp ảnh, các điểm tương ứng giữa các khung hình kề nhau được xác định bằng kỹ thuật luồng quang học hoặc khớp góc dựa trên đặc trưng. Giai đoạn tái dựng chuyển động--cấu trúc ước lượng chuyển động của đầu và vị trí 3D của các điểm theo dõi. Cuối cùng, một mô hình khuôn mặt được khớp vào tập điểm 3D đã tái dựng.
+\paragraph{Tái dựng từ chuỗi ảnh.}\label{sec:face_modeling_from_img_sequence}
+Hướng tiếp cận phổ biến nhất dựa trên chuỗi ảnh đầu vào thường triển khai theo ba giai đoạn: khớp ảnh, tái dựng chuyển động--cấu trúc, và khớp mô hình. Trong giai đoạn khớp ảnh, các điểm tương ứng giữa các khung hình kề nhau được xác định bằng kỹ thuật luồng tối ưu hoặc khớp góc dựa trên đặc trưng. Giai đoạn tái dựng chuyển động--cấu trúc ước lượng chuyển động của đầu và vị trí 3D của các điểm theo dõi. Cuối cùng, một mô hình khuôn mặt được khớp vào tập điểm 3D đã tái dựng.
 
-Fua và Miccio \cite{fua1999animated} đề xuất kỹ thuật điều chỉnh bó hướng mô hình bằng cách bổ sung ràng buộc chính quy vào bài toán điều chỉnh bó truyền thống, sao cho các điểm 3D tái dựng được phải phù hợp với một mô hình tham số hóa khuôn mặt. Mô hình tham số bao gồm một lưới khuôn mặt tổng quát và các điểm kiểm soát biến dạng tuyến tính. Bài toán khớp mô hình được phát biểu như một bài toán tối thiểu hóa khoảng cách:
+Fua và Miccio \cite{fua1999animated} đề xuất kỹ thuật model-driven bundle adjustment bằng cách bổ sung một regularizer constraint vào bài toán bundle adjustment truyền thống, sao cho các điểm 3D tái dựng được phải phù hợp với một mô hình tham số hóa khuôn mặt. Mô hình tham số bao gồm một lưới khuôn mặt tổng quát và các điểm kiểm soát biến dạng tuyến tính. Bài toán khớp mô hình được phát biểu như một bài toán tối thiểu hóa khoảng cách:
 
 \begin{equation}
     \min \sum_{i} \text{Dist}\bigl[P_i,\, \mathcal{T}(S)\bigr],
     \label{eq:model_fitting}
 \end{equation}
 
-trong đó $P_i$ là các điểm 3D tái dựng, $S = S(c_1, \dots, c_m)$ là bề mặt mô hình phụ thuộc vào các hệ số điều khiển $c_1, \dots, c_m$, và $\mathcal{T}$ là toán tử biến đổi tham số hóa bởi phép quay $R$, phép tịnh tiến $T$, và hệ số tỉ lệ $s$. Bài toán được giải lặp theo cách tiếp cận điểm gần nhất: với $c_j$ cố định, giải cho $R, T, s$ bằng kỹ thuật quaternion; sau đó với $R, T, s$ cố định, hệ tuyến tính theo $c_j$ được giải bình phương tối tiểu.
+trong đó $P_i$ là các điểm 3D tái dựng, $S = S(c_1, \dots, c_m)$ là bề mặt mô hình phụ thuộc vào các hệ số điều khiển $c_1, \dots, c_m$, và $\mathcal{T}$ là toán tử biến đổi tham số hóa bởi phép quay $R$, phép tịnh tiến $T$, và hệ số tỉ lệ $s$.
+
+Bài toán tối thiểu hóa này được giải bằng phương pháp Iterative Closest Point. Đầu tiên, các hệ số $c_1, \dots, c_m$ được khởi tạo và cố định. Với mỗi điểm $P_i$, ta tiến hành tìm điểm gần nhất $Q_i$ của nó trên bề mặt $S$. Sau đó, giải tìm các tham số tư thế $R, T, s$ để tối thiểu hóa biểu thức $\sum_{i} \| P_i - \mathcal{T}(Q_i) \|$ bằng cách sử dụng kỹ thuật dựa trên quaternion. Sau khi các tham số tư thế đầu được cố định, do $S$ là một hàm tuyến tính theo $c_1, \dots, c_m$, bài toán \eqref{eq:model_fitting} trở thành một hệ phương trình tuyến tính và có thể giải được thông qua phương pháp bình phương tối tiểu. Ở vòng lặp kế tiếp, các hệ số $c_1, \dots, c_m$ vừa ước lượng mới sẽ được cố định, và quá trình giải tìm $R, T, s$ lại được lặp lại.
 
 Liu và cộng sự \cite{liu2001rapid} xây dựng hệ thống cho phép người dùng không chuyên tạo và hoạt hóa mô hình khuôn mặt của chính mình chỉ bằng một máy tính cá nhân và camera thông thường. Người dùng chỉ cần đánh dấu năm điểm đặc trưng trên hai khung hình, sau đó toàn bộ quá trình diễn ra tự động. Hệ thống sử dụng không gian tuyến tính của các hình học khuôn mặt, trong đó bất kỳ khuôn mặt nào cũng được biểu diễn như một tổ hợp tuyến tính của khuôn mặt trung lập $\mathcal{S}^0$ và tập hợp $m$ metric biến dạng $\mathcal{M}^j$:
 
@@ -37,24 +39,24 @@ trong đó $c_j$ là hệ số metric và $[l_j, u_j]$ là phạm vi hợp lệ.
     \label{fig:reconstructed_models}
 \end{figure}
 
-Shan và cộng sự \cite{shan2001model} đề xuất thuật toán điều chỉnh bó dựa trên mô hình, kết hợp ước lượng chuyển động và khớp mô hình vào một bài toán tối ưu thống nhất, trong đó không gian mô hình trực tiếp là không gian tìm kiếm. Việc loại bỏ các biến vị trí 3D của điểm đặc trưng giúp thu hẹp đáng kể không gian tìm kiếm và cải thiện tính ổn định của hệ tối ưu. Hình \ref{fig:bundle_adjustment} cho thấy kết quả tái dựng của phương pháp này gần với thực tế hơn hẳn so với điều chỉnh bó truyền thống.
+Shan và cộng sự \cite{shan2001model} đề xuất thuật toán model-driven bundle adjustment, kết hợp ước lượng chuyển động và khớp mô hình vào một bài toán tối ưu thống nhất, trong đó không gian mô hình trực tiếp là không gian tìm kiếm. Việc loại bỏ các biến vị trí 3D của điểm đặc trưng giúp thu hẹp đáng kể không gian tìm kiếm và cải thiện tính ổn định của hệ tối ưu. Hình \ref{fig:bundle_adjustment} cho thấy kết quả tái dựng của phương pháp này gần với thực tế hơn hẳn so với bundle adjustment truyền thống.
 
-\begin{figure}[htbp]
+\begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.80\textwidth]{img/Fig.20.3.png}
-    \caption{So sánh kết quả tái dựng lưới khuôn mặt giữa phương pháp điều chỉnh bó truyền thống (trái), thực tế (giữa), và điều chỉnh bó dựa trên mô hình (phải) \cite{shan2001model}.}
+    \includegraphics[width=0.65\textwidth]{img/Fig.20.3.png}
+    \caption{So sánh kết quả tái dựng lưới khuôn mặt giữa phương pháp bundle adjustment truyền thống (trái), thực tế (giữa), và model-driven bundle adjustment (phải) \cite{shan2001model}.}
     \label{fig:bundle_adjustment}
 \end{figure}
 
 \paragraph{Tái dựng từ hai ảnh trực giao.}
-Một số tác giả đề xuất xây dựng mô hình khuôn mặt từ hai ảnh trực giao gồm một ảnh chính diện và một ảnh nghiêng \cite{akimoto1993automatic}. Ảnh chính diện cung cấp thông tin về trục ngang và dọc, trong khi ảnh nghiêng cung cấp thông tin về độ sâu. Người dùng cần đánh dấu thủ công các điểm đặc trưng trên cả hai ảnh, bao gồm vùng lông mày, mắt, mũi và miệng. Do hiện tượng che khuất, số lượng điểm đặc trưng ở hai góc nhìn nói chung là khác nhau. Chất lượng mô hình tỉ lệ thuận với số lượng điểm đặc trưng được cung cấp, nhưng cần cân bằng giữa công sức thao tác thủ công và chất lượng mong muốn.
+Một số tác giả đề xuất xây dựng mô hình khuôn mặt từ hai ảnh trực giao gồm một ảnh chính diện và một ảnh nghiêng \cite{akimoto1993automatic, dariush1998spatiotemporal, ip1996constructing}. Ảnh chính diện cung cấp thông tin về trục ngang và dọc, trong khi ảnh nghiêng cung cấp thông tin về độ sâu. Người dùng cần đánh dấu thủ công các điểm đặc trưng trên cả hai ảnh, bao gồm vùng lông mày, mắt, mũi và miệng. Do hiện tượng che khuất, số lượng điểm đặc trưng ở hai góc nhìn nói chung là khác nhau. Chất lượng mô hình tỉ lệ thuận với số lượng điểm đặc trưng được cung cấp, nhưng cần cân bằng giữa công sức thao tác thủ công và chất lượng mong muốn.
 
 Nhờ tính đơn giản trong triển khai và không phát sinh vấn đề về tính ổn định số, hướng tiếp cận này đã được ứng dụng trong một số phần mềm thương mại. Một số hệ thống còn cung cấp giao diện bán tự động để giảm bớt thao tác đánh dấu điểm cho người dùng. Tuy nhiên, nhược điểm lớn nhất là việc thu thập đồng thời hai ảnh trực giao không thuận tiện trong điều kiện thực tế, và ngay cả với giao diện bán tự động, vẫn đòi hỏi khá nhiều can thiệp thủ công.
 
 \paragraph{Tái dựng từ một ảnh đơn.}
 Blanz và Vetter \cite{blanz1999morphable} phát triển hệ thống tái dựng mô hình 3D khuôn mặt từ một ảnh đơn lẻ, sử dụng đồng thời cơ sở dữ liệu hình học và cơ sở dữ liệu kết cấu. Không gian hình học là tổ hợp tuyến tính của các khuôn mặt mẫu, và tương tự cho không gian kết cấu. Với một ảnh khuôn mặt cho trước, hệ thống tìm kiếm các hệ số trong cả hai không gian sao cho ảnh tổng hợp khớp với ảnh đầu vào. Một hạn chế của hệ thống là hiệu quả giảm sút khi gặp khuôn mặt có loại da khác biệt so với các mẫu trong cơ sở dữ liệu.
 
-Liu \cite{liu2001single} phát triển một hệ thống hoàn toàn tự động để xây dựng mô hình 3D khuôn mặt từ một ảnh chính diện duy nhất. Hệ thống kết hợp thuật toán phát hiện khuôn mặt và căn chỉnh đặc trưng với không gian tuyến tính của hình học khuôn mặt đã trình bày ở trên, và giả định phép chiếu trực giao. Hình \ref{fig:single_image_input} trình bày ảnh đầu vào cùng kết quả căn chỉnh đặc trưng tương ứng.
+Liu \cite{liu2001single} phát triển một hệ thống hoàn toàn tự động để xây dựng mô hình khuôn mặt 3D từ một ảnh chính diện duy nhất. Đầu tiên, họ sử dụng thuật toán phát hiện khuôn mặt để tìm khuôn mặt và sau đó sử dụng thuật toán căn chỉnh đặc điểm để tìm các đặc điểm của khuôn mặt. Bằng cách giả định phép chiếu trực giao, họ đã khớp mô hình khuôn mặt 3D bằng cách sử dụng không gian tuyến tính của hình học khuôn mặt được mô tả trong \ref{sec:face_modeling_from_img_sequence}. Hình \ref{fig:single_image_input} trình bày ảnh đầu vào cùng kết quả căn chỉnh đặc trưng tương ứng.
 
 \begin{figure}[htbp]
     \centering

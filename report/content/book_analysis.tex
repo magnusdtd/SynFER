@@ -1,19 +1,13 @@
 \subsection{Tổng quan về tổng hợp khuôn mặt}
-Giới thiệu khái niệm tổng hợp ảnh tĩnh và hoạt hóa khuôn mặt.
+Tổng hợp khuôn mặt là một bài toán đầy thách thức và hấp dẫn trong lĩnh vực đồ họa máy tính, bao gồm việc tổng hợp ảnh tĩnh cũng như hoạt hóa khuôn mặt. Các kỹ thuật tổng hợp không chỉ giới hạn trong việc tạo ra những hình ảnh chân thực cho công nghiệp điện ảnh hay trò chơi điện tử, mà còn đóng vai trò quan trọng trong các hệ thống tương tác người-máy và kỹ thuật talking head compression trong video hội thoại. Hơn nữa, những phương pháp này còn hỗ trợ đắc lực cho các bài toán nhận dạng khuôn mặt thông qua việc tạo ra các mẫu dữ liệu tổng hợp dưới nhiều góc độ và điều kiện chiếu sáng khác nhau.
 
 \subsection{Các kỹ thuật nền tảng cốt lõi trong giáo trình}
 
-
 \input{content/face_modeling.tex}
-
 
 \input{content/face_relighting.tex}
 
+\input{content/face_expression_synthesis.tex}
 
-\subsubsection{Tổng hợp biểu cảm khuôn mặt}
-Phân tích 3 phương pháp tiếp cận kinh điển:
-\begin{itemize}
-    \item Dựa trên mô hình vật lý cơ-xương (Physically Based).
-    \item Dựa trên biến đổi hình thái hình học (Morph-Based).
-    \item Ánh xạ biểu cảm hiệu năng (Expression Mapping/ERI).
-\end{itemize}
+\subsubsection{Thảo luận và Định hướng}
+Những kỹ thuật truyền thống đã tạo ra nền móng vững chắc cho việc mô hình hóa, chiếu sáng và tổng hợp biểu cảm. Tuy nhiên, thách thức lớn vẫn nằm ở việc tự động hóa và vượt qua các giới hạn nội suy cục bộ. Các phương pháp dựa trên hình học hoặc vật lý khó thể hiện sự phong phú vô tận của sắc thái con người nếu thiếu dữ liệu đầu vào dày đặc, mở ra không gian cho các phương pháp sinh hình ảnh mang tính khái quát cao hơn.
