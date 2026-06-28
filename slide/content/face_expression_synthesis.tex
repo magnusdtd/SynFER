@@ -1,0 +1,125 @@
+\section{Tổng hợp biểu cảm khuôn mặt}
+
+% ---- Slide 1: Tổng quan ----
+\begin{frame}{Tổng hợp biểu cảm khuôn mặt -- Tổng quan}
+    \textbf{Định nghĩa:} Tạo ra các hình ảnh biểu cảm khuôn mặt chân thực từ dữ liệu ban đầu.
+
+    \bigskip
+    \textbf{Ba hướng tiếp cận chính:}
+    \begin{itemize}
+        \item Tổng hợp dựa trên vật lý
+        \item Tổng hợp dựa trên biến hình (morphing)
+        \item Ánh xạ biểu cảm (performance-driven)
+    \end{itemize}
+
+    \bigskip
+    \textbf{Ứng dụng:} Hoạt hình, kỹ xảo điện ảnh, avatar, tương tác người máy.
+\end{frame}
+
+% ---- Slide 2: Dựa trên vật lý & Biến hình ----
+\begin{frame}{Tổng hợp dựa trên vật lý \& Biến hình}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            \textbf{Dựa trên vật lý \cite{terzopoulos1990physically}}
+            \begin{itemize}
+                \item Mô phỏng bằng mô hình khối lượng và lò xo.
+                \item Sử dụng các cơ tuyến tính và cơ vòng để tác động lực lên lưới da.
+                \item Hạn chế: Khó mô phỏng chi tiết vi mô (nếp nhăn), thiếu tự nhiên.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \textbf{Dựa trên biến hình \cite{pighin1998synthesizing}}
+            \begin{itemize}
+                \item Nội suy từ tập hợp các ví dụ mẫu 2D/3D.
+                \item Tổ hợp tuyến tính lồi để pha trộn biểu cảm.
+                \item Hạn chế: Không gian biểu cảm bị giới hạn bởi mẫu hiện có, dễ sinh lỗi (artifact) ở vùng ranh giới.
+            \end{itemize}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ---- Slide 3: Ánh xạ biểu cảm - ERI ----
+\begin{frame}{Ánh xạ biểu cảm -- Ảnh tỉ số biểu cảm (ERI) \cite{liu2001expressive}}
+    \begin{columns}[c]
+        \begin{column}{0.5\textwidth}
+            \textbf{Ý tưởng chính:}
+            \begin{itemize}
+                \item Ánh xạ chi tiết biến dạng da (nếp nhăn) độc lập với màu da.
+                \item Tỉ số $I'_a / I_a$ phản ánh thay đổi chiếu sáng do đổi pháp tuyến.
+                \item Áp dụng lên người mới:
+                \[
+                    I'_b = I_b \frac{I'_a}{I_a}
+                \]
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\linewidth, height=0.55\textheight, keepaspectratio]{Fig.20.9.png}\par
+            \vspace{2pt}
+            {\tiny Trái qua phải: Ảnh trung lập, ảnh biểu cảm, và ERI \cite{liu2001expressive}}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ---- Slide 4: Kết quả ánh xạ bằng ERI ----
+\begin{frame}{Kết quả ánh xạ chi tiết bằng ERI \cite{liu2001expressive}}
+    \begin{columns}[c]
+        \begin{column}{0.35\textwidth}
+            \textbf{Đánh giá kết quả:}
+            \begin{itemize}
+                \item Tái tạo nếp nhăn sinh động.
+                \item Chân thực hơn hẳn so với kỹ thuật bẻ cong hình học thông thường.
+                \item Hạn chế: Yêu cầu có ERI của người diễn xuất.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.62\textwidth}
+            \centering
+            \includegraphics[width=\linewidth, height=0.55\textheight, keepaspectratio]{Fig.20.10.png}\par
+            \vspace{2pt}
+            {\tiny So sánh: Bẻ cong hình học (giữa) và ERI (phải) \cite{liu2001expressive}}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ---- Slide 5: Ứng dụng ERI lên tranh và tượng ----
+\begin{frame}{Ứng dụng ERI \cite{liu2001expressive}}
+    \begin{columns}[c]
+        \begin{column}{0.48\textwidth}
+            \begin{figure}
+                \centering
+                \includegraphics[width=\linewidth, height=0.5\textheight, keepaspectratio]{Fig.20.12.png}
+                \caption{Ánh xạ biểu cảm lên Mona Lisa \cite{liu2001expressive}.}
+            \end{figure}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{figure}
+                \centering
+                \includegraphics[width=\linewidth, height=0.5\textheight, keepaspectratio]{Fig.20.13.png}
+                \caption{Ánh xạ biểu cảm lên các bức tượng \cite{liu2001expressive}.}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ---- Slide 5: Tổng hợp điều khiển bằng hình học ----
+\begin{frame}{Tổng hợp điều khiển bằng hình học \cite{zhang2003geometry}}
+    \begin{columns}[c]
+        \begin{column}{0.5\textwidth}
+            \textbf{Khắc phục nhược điểm của ERI:}
+            \begin{itemize}
+                \item Chỉ cần quỹ đạo điểm đặc trưng, không cần ảnh nguồn từ người diễn xuất.
+                \item Giả định biểu cảm nằm trong không gian tổ hợp lồi:
+                \[
+                    H = \left\{ \left( \sum c_i G_i, \sum c_i I_i \right) \right\}
+                \]
+                \item Tìm $c_i$ bằng cách chiếu hình học, sau đó tổng hợp kết cấu.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\linewidth, height=0.55\textheight, keepaspectratio]{Fig.20.14.png}\par
+            \vspace{2pt}
+            {\tiny Kiến trúc hệ thống tổng hợp dựa trên hình học \cite{zhang2003geometry}}
+        \end{column}
+    \end{columns}
+\end{frame}

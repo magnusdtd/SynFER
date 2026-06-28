@@ -1,8 +1,8 @@
 
-\subsection{Thay đổi điều kiện ánh sáng}
+\section{Chiếu sáng lại khuôn mặt}
 
 % --- Slide 1: Tổng quan ---
-\begin{frame}{Thay đổi điều kiện ánh sáng -- Tổng quan}
+\begin{frame}{Chiếu sáng lại khuôn mặt -- Tổng quan}
     \begin{block}{Mục tiêu cốt lõi}
         Tổng hợp ảnh khuôn mặt chân thực dưới \textbf{chiếu sáng tùy ý} từ ảnh gốc ban đầu.
     \end{block}
@@ -41,32 +41,30 @@
 
 % --- Slide 3: Spherical Harmonics -- Khai triển ---
 \begin{frame}{Thay đổi ánh sáng từ một ảnh đơn}
-    Wen et al. \cite{wen2003face} đề xuất khai triển hàm cường độ bức xạ (\textit{irradiance}) bằng 9 hàm cơ sở Spherical Harmonics (SH) bậc thấp:
+    Wen et al. \cite{wen2003face} đề xuất khai triển hàm cường độ bức xạ bằng 9 hàm cơ sở Spherical Harmonics (SH) bậc thấp:
     \begin{equation}
         E(\mathbf{n}) \approx \sum_{\substack{l \le 2 \\ -l \le m \le l}} \hat{A}_l\, L_{lm}\, Y_{lm}(\mathbf{n}).
     \end{equation}
 
-    \vspace{0.3cm}
+    \textbf{Đóng góp chính:}
     \begin{itemize}
-        \item Khai thác tính chất: Da mặt con người chủ yếu chứa thành phần \textit{albedo trung bình} ($\rho_{00}$), gần như không có thành phần tần số thấp.
-        \item Giải hệ phương trình bình phương tối thiểu tuyến tính để tìm 9 hệ số cơ sở.
+        \item Khai thác tính chất: Da mặt con người chủ yếu chứa thành phần hệ số phản xạ trung bình ($\rho_{00}$), gần như không có thành phần tần số thấp.
+        \item \textbf{Phương pháp:} Ước lượng 9 tham số $x_{lm} \approx \rho_{00} \hat{A}_l L_{lm}$ bằng bình phương tối thiểu tuyến tính.
         \item \textbf{Kết quả:} Trích xuất thành công bản đồ bức xạ $I_s(\mathbf{n}) = \bar{\rho}\, E(\mathbf{n})$ từ chỉ một ảnh đầu vào.
     \end{itemize}
 \end{frame}
 
-% --- Slide 4: Tái chiếu sáng và kết quả ---
-\begin{frame}{Tái chiếu sáng bằng ảnh tỷ lệ}
-    \begin{columns}
+\begin{frame}{2.2 Ứng dụng chiếu sáng lại khuôn mặt (3/3)}
+    \begin{columns}[c]
         \begin{column}{0.45\textwidth}
+            \textbf{Thay đổi ánh sáng động trong video:}
             Khi khuôn mặt chuyển động xoay ($\mathbf{n} \to \mathbf{n}'$), cường độ sáng được cập nhật tự nhiên:
-            \begin{equation*}
+            \begin{equation}
                 I'_f = I_f \cdot \frac{I_s(\mathbf{n}')}{I_s(\mathbf{n})}.
-            \end{equation*}
-            \vspace{0.2cm}
-            \begin{itemize}
-                \item \textbf{Ưu điểm:} Ảnh tổng hợp duy trì được tính chân thực cao.
-                \item Sai khác nhỏ chỉ xuất hiện ở vùng phản xạ gương (tính non-Lambertian của da) \cite{marschner1999skin}.
-            \end{itemize}
+            \end{equation}
+            \vspace{0.3cm}
+
+            \textbf{Đánh giá:} Sai khác nhỏ chỉ xuất hiện ở vùng phản xạ gương (tính chất phản xạ phức tạp của da) \cite{marschner1999skin}.
         \end{column}
         \begin{column}{0.5\textwidth}
             \begin{figure}

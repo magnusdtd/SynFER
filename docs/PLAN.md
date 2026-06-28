@@ -1,6 +1,6 @@
 # Kế hoạch & Phân công công việc
 
-Dự án bắt đầu từ ngày **26/05/2026** và deadline là ngày **26/06/2026** (thời lượng 1 tháng). Dưới đây là timeline phân công công việc chi tiết cho từng thành viên trong nhóm:
+Dự án bắt đầu từ ngày **26/05/2026** và deadline là ngày **28/06/2026** (thời lượng 1 tháng). Dưới đây là timeline phân công công việc chi tiết cho từng thành viên trong nhóm:
 
 | Thành viên | Thời gian | Nhiệm vụ | Các file cần hoàn thành | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- |

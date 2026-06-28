@@ -1,0 +1,42 @@
+\section{Nghiên cứu bài báo tiên tiến: SynFER}
+\begin{frame}{Động lực và Ý tưởng cốt lõi của SynFER}
+    \textbf{Bài báo:} "SynFER: Towards Boosting Facial Expression Recognition with Synthetic Data" \cite{he2025synfer}
+    \vspace{0.3cm}
+
+    \textbf{Động lực:}
+    \begin{itemize}
+        \item Các mô hình nhận dạng biểu cảm (FER) khát dữ liệu chất lượng cao quy mô lớn.
+        \item Việc thu thập và gán nhãn thủ công vô cùng tốn kém và mang tính chủ quan.
+    \end{itemize}
+    \vspace{0.3cm}
+    \textbf{Ý tưởng cốt lõi:}
+    \begin{itemize}
+        \item Đề xuất \textbf{SynFER} - một quy trình tổng hợp dữ liệu toàn diện dựa trên mô hình Diffusion.
+        \item Cho phép sinh ra số lượng không giới hạn ảnh biểu cảm chất lượng cao với nhãn gán chính xác nhờ điều khiển bằng Facial Action Unit (FAU) và Semantic Guidance.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Kiến trúc kỹ thuật chi tiết}
+    \textbf{Tập dữ liệu lai ghép FEText:} Xây dựng từ các tập dữ liệu chất lượng cao, đồng bộ hóa độ phân giải và sử dụng mô hình ngôn ngữ lớn đa phương thức để sinh tự động mô tả chi tiết.
+
+    \textbf{Kiểm soát bằng FAU:}
+    \begin{itemize}
+        \item Ánh xạ các nhãn FAU (đại diện cho chuyển động cơ mặt) thành đặc trưng không gian.
+        \item Tiêm vào mô hình Diffusion thông qua cơ chế chú ý chéo tách biệt.
+    \end{itemize}
+
+    \textbf{Semantic Guidance trong khử nhiễu:}
+    \begin{itemize}
+        \item Áp dụng khởi tạo bố cục bằng cách đảo ngược ảnh gốc thành nhiễu $x_T^s$.
+        \item Lan truyền ngược sai số từ mạng phân loại biểu cảm để cập nhật vector đặc trưng văn bản $c^{\text{text}}$.
+        \item Ép buộc ảnh sinh ra ở các bước cuối bám sát chính xác cảm xúc mục tiêu.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Sơ đồ Pipeline của SynFER}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.85\linewidth]{../SynFER_paper_source_code/sec/imgs/synpipeline.pdf}
+        \caption{Quy trình tổng hợp dữ liệu nhận dạng biểu cảm khuôn mặt SynFER.}
+    \end{figure}
+\end{frame}

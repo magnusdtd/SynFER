@@ -1,14 +1,48 @@
-\section{Nghiên cứu Bài báo Tiên tiến}
+\section{Nghiên cứu bài báo tiên tiến: SynFER}
 
 \subsection{Động lực nghiên cứu và Ý tưởng cốt lõi}
-Lý giải bài toán khan hiếm dữ liệu FER chất lượng cao và giải pháp đề xuất mô hình khuếch tán điều khiển mịn.  
+Trong những năm gần đây, sự phát triển của các mô hình nhận dạng biểu cảm khuôn mặt học sâu đã mang lại những tiến bộ vượt bậc. Tuy nhiên, rào cản lớn nhất ngăn cản việc xây dựng các mô hình nền tảng mạnh mẽ chính là sự thiếu hụt trầm trọng về quy mô và chất lượng của dữ liệu huấn luyện. Quá trình thu thập và gán nhãn dữ liệu biểu cảm quy mô lớn tốn kém rất nhiều chi phí và thời gian, đồng thời còn vướng phải các vấn đề đạo đức cũng như tính chủ quan trong quá trình dán nhãn của con người. Để giải quyết vấn đề này, bài báo ``SynFER: Towards Boosting Facial Expression Recognition with Synthetic Data'' \cite{synfer} giới thiệu một quy trình tổng hợp dữ liệu hoàn chỉnh thông qua mô hình Diffusion, nhằm tạo ra số lượng vô hạn các hình ảnh biểu cảm với độ chân thực cao và nhãn gán đáng tin cậy. Ý tưởng cốt lõi là vượt qua giới hạn của việc chỉ dùng văn bản mô tả chung chung bằng cách kết hợp điều khiển qua Facial Action Unit (FAU) và Semantic Guidance. Sơ đồ tổng thể của phương pháp được minh họa trong Hình \ref{fig:synpipeline}.
 
-\subsection{Kiến trúc kỹ thuật chi tiết của Framework SynFER}   
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{../SynFER_paper_source_code/sec/imgs/synpipeline.pdf}
+    \caption{Sơ đồ tổng thể quy trình tổng hợp dữ liệu nhận dạng biểu cảm khuôn mặt SynFER.}
+    \label{fig:synpipeline}
+\end{figure}
 
-\subsubsection{Xây dựng tập dữ liệu FEText}: Quy trình thu thập dữ liệu lai từ FFHQ, CelebA-HQ và gán nhãn tự động bằng mô hình ShareGPT-4V.  
+\subsection{Kiến trúc kỹ thuật chi tiết của hệ thống}
 
-\subsubsection{Explicit FAU Control}
-Cơ chế hoạt động của mô-đun AU Adapter kết hợp Decoupled Cross-Attention giúp tác động vào các nhóm cơ cục bộ.  
+\subsubsection{Xây dựng tập dữ liệu văn bản biểu cảm FEText}
+Để huấn luyện mô hình Diffusion, nhóm tác giả xây dựng một tập dữ liệu đa phương thức lai ghép mang tên FEText, kết hợp hình ảnh từ các tập dữ liệu chất lượng cao có sẵn như FFHQ, CelebA-HQ, AffectNet và SFEW. Nhằm đồng bộ độ phân giải, các ảnh đầu vào từ AffectNet và SFEW được nâng cấp chất lượng bằng mô hình siêu phân giải trong khi các ảnh độ phân giải cao được giữ nguyên nhằm bảo toàn năng lực sinh ảnh chi tiết. Sau đó, một mô hình ngôn ngữ lớn đa phương thức mã nguồn mở (ShareGPT-4V) được sử dụng để tự động sinh ra các đoạn văn bản mô tả chi tiết thông qua các câu lệnh định hướng. Quá trình này tạo ra hàng trăm ngàn cặp dữ liệu ảnh-văn bản chuyên biệt cho tác vụ biểu cảm. Hình \ref{fig:affect_text} minh họa quy trình xây dựng tập dữ liệu.
 
-\subsubsection{Semantic Guidance}
-Phân tích thuật toán cập nhật text embedding ở các bước dừng nhiễu cuối (lần ngược gradient từ phân loại biểu cảm bên ngoài) nhằm tăng cường độ đậm nét của biểu cảm. 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{../SynFER_paper_source_code/sec/imgs/fertext.pdf}
+    \caption{Quy trình xây dựng tập dữ liệu đa phương thức lai ghép FEText.}
+    \label{fig:affect_text}
+\end{figure}
+
+\subsubsection{Cơ chế sinh ảnh của mô hình Diffusion}
+Quá trình sinh ảnh của Diffusion bao gồm quá trình thêm nhiễu và khử nhiễu. Quá trình thêm nhiễu biến đổi một ảnh sạch $x_0$ thành ảnh nhiễu $x_T$ theo phân phối Gaussian qua từng bước $t$:
+\begin{equation}
+    x_t = \sqrt{\alpha_t}x_0 + \sqrt{1-\alpha_t}\epsilon.
+\end{equation}
+Trong quá trình khử nhiễu, một mạng nơ-ron $\epsilon_{\theta}$ dự đoán nhiễu tại mỗi bước $t$ dựa trên điều kiện $c$, từ đó khôi phục lại ảnh tại bước $t-1$:
+\begin{equation}
+    x_{t-1} = \frac{\sqrt{\alpha_{t-1}}}{\sqrt{\alpha_{t}}} x_t + \sqrt{\alpha_{t-1}} \left(\sqrt{\frac{1}{\alpha_{t-1}} - 1} - \sqrt{\frac{1}{\alpha_t} -1}\right) \epsilon_{\theta}(x_t, t, c).
+\end{equation}
+Mô hình Diffusion được fine-tune trên tập dữ liệu FEText để nắm bắt các đặc điểm ngôn ngữ chung về biểu cảm khuôn mặt.
+
+\subsubsection{Kiểm soát tín hiệu cơ mặt cục bộ bằng Facial Action Unit}
+Mặc dù văn bản mô tả cung cấp định hướng tổng thể, chúng lại thiếu khả năng kiểm soát chính xác các chi tiết cơ mặt cụ thể. Giải pháp được đưa ra là tích hợp thông tin từ các Facial Action Unit (FAU), đại diện cho từng chuyển động cơ bắp riêng lẻ. Hệ thống sử dụng một Multi Layer Perceptron (MLP)  để ánh xạ các nhãn FAU rời rạc thành các đặc trưng không gian đa chiều. Các đặc trưng này sau đó được tiêm vào mô hình Diffusion thông qua decoupled cross attention. Mô-đun này được gọi là AU Adapter. Việc chỉ huấn luyện AU Adapter trong khi đóng băng các tham số của mô hình Diffusion giúp bảo toàn năng lực sinh ảnh, đồng thời ép buộc mô hình phải bám sát các chi tiết cơ mặt.
+
+\subsubsection{Semantic Guidance trong quá trình khử nhiễu}
+Do sự mất cân bằng phân phối nhãn trong dữ liệu huấn luyện và sự mơ hồ tự nhiên giữa một số cảm xúc, chỉ dựa vào văn bản và tín hiệu cơ mặt đôi khi không đảm bảo mô hình sinh ra đúng biểu cảm mong muốn. Kỹ thuật Semantic Guidance được đề xuất để giải quyết triệt để tình trạng này. Đầu tiên, mô hình áp dụng chiến lược khởi tạo bố cục bằng cách đảo ngược một ảnh ngẫu nhiên $x^s$ từ FEText thành nhiễu $x_T^s$, giúp giữ vững cấu trúc khuôn mặt. Tiếp theo, hệ thống dự đoán ảnh gốc $\hat{x}_0$ từ trung gian $x_t$, sau đó dùng mạng phân loại biểu cảm bên ngoài tính toán mất mát phân loại $\mathcal{L}_g$:
+\begin{equation}
+    \mathcal{L}_{g} = -y\log(h(f(\hat{x}_0))_i).
+\end{equation}
+Sai số này được lan truyền ngược nhằm tính toán đạo hàm và trực tiếp cập nhật vector đặc trưng văn bản $c^{\text{text}}$ ở các bước khử nhiễu tiếp theo:
+\begin{equation}
+    c^{\text{text}}_{t-1} = c^{\text{text}}_{t} + \lambda_{g} \frac{ \nabla_{c^{\text{text}}_{t}} \mathcal{L}_{g}} {||\nabla_{c^{\text{text}}_{t}} \mathcal{L}_{g}||_2},
+\end{equation}
+trong đó $\lambda_g$ là bước nhảy. Nhờ sự cập nhật liên tục của tín hiệu văn bản, hình ảnh sinh ra bị ép buộc phải bám sát đặc trưng cốt lõi của cảm xúc mục tiêu.

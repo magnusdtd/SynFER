@@ -26,3 +26,4 @@ report/outputs/
 *.pdf
 slide/indent.log
 report/indent.log
+SynFER_paper_source_code/*
