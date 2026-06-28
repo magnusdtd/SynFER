@@ -11,6 +11,7 @@
     \vspace{0.3cm}
     \textbf{Ý tưởng cốt lõi:}
     \begin{itemize}
+
         \item Đề xuất \textbf{SynFER} - một quy trình tổng hợp dữ liệu toàn diện dựa trên mô hình Diffusion.
         \item Cho phép sinh ra số lượng không giới hạn ảnh biểu cảm chất lượng cao với nhãn gán chính xác nhờ điều khiển bằng Facial Action Unit (FAU) và Semantic Guidance.
     \end{itemize}
@@ -18,17 +19,17 @@
 
 \begin{frame}{Mô hình Diffusion}
     Quá trình thêm nhiễu:
-    \begin{equation*}
+    \begin{equation}
         x_t = \sqrt{\alpha_t}x_0 + \sqrt{1-\alpha_t}\epsilon
-    \end{equation*}
+    \end{equation}
     Quá trình khử nhiễu:
-    \begin{equation*}
+    \begin{equation}
         x_{t-1} = \frac{\sqrt{\alpha_{t-1}}}{\sqrt{\alpha_{t}}} x_t + \sqrt{\alpha_{t-1}} \left(\sqrt{\frac{1}{\alpha_{t-1}} - 1} - \sqrt{\frac{1}{\alpha_t} -1}\right) \epsilon_{\theta}(x_t, t, c)
-    \end{equation*}
+    \end{equation}
     Hàm mất mát:
-    \begin{equation*}
+    \begin{equation}
         \min_{\theta} \mathbb{E}_{x_0,\epsilon\sim\mathcal{N}(\mathbf{0},\mathbf{I}),c,t}\|\epsilon-\epsilon_\theta(x_t,c,t)\|_2^2
-    \end{equation*}
+    \end{equation}
 \end{frame}
 
 \begin{frame}{Sơ đồ Pipeline của SynFER}
@@ -47,10 +48,10 @@
         \item \textbf{Kiểm soát bằng FAU:} Ánh xạ FAU thành đặc trưng không gian, đưa vào qua decoupled cross-attention.
               \vspace{0.3cm}
         \item \textbf{Semantic Guidance trong khử nhiễu:}
-              \begin{align*}
+              \begin{align}
                   \hat{x}_0             & = \frac{x_t - \sqrt{1-\Bar{\alpha}_t}\epsilon_{\theta}(x_t, t, c^{\text{text}}, c^{\text{au}})}{\sqrt{\Bar{\alpha}_t}}                        \\
                   \mathcal{L}_{g}       & = -y\log(h(f(\hat{x}_0))_i)                                                                                                                   \\
                   c^{\text{text}}_{t-1} & = c^{\text{text}}_{t} + \lambda_{g} \frac{ \nabla_{c^{\text{text}}_{t}} \mathcal{L}_{g}} {||\nabla_{c^{\text{text}}_{t}} \mathcal{L}_{g}||_2}
-              \end{align*}
+              \end{align}
     \end{itemize}
 \end{frame}

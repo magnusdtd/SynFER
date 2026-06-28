@@ -21,9 +21,9 @@
     \begin{columns}[c]
         \begin{column}{0.56\textwidth}
             Không gian tuyến tính hình học khuôn mặt:
-            \[
+            \begin{equation}
                 \mathcal{S} = \mathcal{S}^0 + \sum_{j=1}^{m} c_j \mathcal{M}^j, \quad c_j \in [l_j, u_j]
-            \]
+            \end{equation}
             \begin{itemize}
                 \item $\mathcal{S}^0$: khuôn mặt trung lập
                 \item $\mathcal{M}^j$: metric biến dạng tuyến tính
@@ -45,9 +45,9 @@
 \begin{frame}{Bài toán khớp mô hình -- Giải lặp ICP \cite{fua1999animated}}
     \begin{columns}[c]
         \begin{column}{0.48\textwidth}
-            \[
+            \begin{equation}
                 \min \sum_{i} \text{Dist}\bigl[P_i,\, \mathcal{T}(S)\bigr]
-            \]
+            \end{equation}
             Giải lặp ICP:
             \begin{itemize}
                 \item Cố định $c_j$ $\Rightarrow$ giải $R, T, s$ bằng quaternion

@@ -32,7 +32,7 @@
             \begin{itemize}
                 \item Nội suy từ tập hợp các ví dụ mẫu 2D/3D.
                 \item Tổ hợp tuyến tính lồi để pha trộn biểu cảm.
-                \item Hạn chế: Không gian biểu cảm bị giới hạn bởi mẫu hiện có, dễ sinh lỗi (artifact) ở vùng ranh giới.
+                \item Hạn chế: Không gian biểu cảm bị giới hạn bởi mẫu hiện có, dễ sinh lỗi ở vùng ranh giới.
             \end{itemize}
         \end{column}
     \end{columns}
@@ -47,9 +47,9 @@
                 \item Ánh xạ chi tiết biến dạng da (nếp nhăn) độc lập với màu da.
                 \item Tỉ số $I'_a / I_a$ phản ánh thay đổi chiếu sáng do đổi pháp tuyến.
                 \item Áp dụng lên người mới:
-                \[
-                    I'_b = I_b \frac{I'_a}{I_a}
-                \]
+                      \begin{equation}
+                          I'_b = I_b \frac{I'_a}{I_a}
+                      \end{equation}
             \end{itemize}
         \end{column}
         \begin{column}{0.48\textwidth}
@@ -109,9 +109,9 @@
             \begin{itemize}
                 \item Chỉ cần quỹ đạo điểm đặc trưng, không cần ảnh nguồn từ người diễn xuất.
                 \item Giả định biểu cảm nằm trong không gian tổ hợp lồi:
-                \[
-                    H = \left\{ \left( \sum c_i G_i, \sum c_i I_i \right) \right\}
-                \]
+                      \begin{equation}
+                          H = \left\{ \left( \sum c_i G_i, \sum c_i I_i \right) \right\}
+                      \end{equation}
                 \item Tìm $c_i$ bằng cách chiếu hình học, sau đó tổng hợp kết cấu.
             \end{itemize}
         \end{column}
