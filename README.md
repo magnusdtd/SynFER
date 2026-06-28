@@ -3,6 +3,7 @@
 This repository aims to reproduce the results in the [SynFER](https://openaccess.thecvf.com/content/ICCV2025/papers/He_SynFER_Towards_Boosting_Facial_Expression_Recognition_with_Synthetic_Data_ICCV_2025_paper.pdf) paper.
 
 > **Final Project: Pattern Recognition**
+>
 > Tech Stack: PyTorch · FastAPI · Next.js · Stable Diffusion · Diffusers
 
 ![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white) ![PyTorch](https://img.shields.io/badge/PyTorch-2.7+-EE4C2C?logo=pytorch&logoColor=white) ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white) ![Next.js](https://img.shields.io/badge/Next.js-14-000000?logo=next.js&logoColor=white) ![LaTeX](https://img.shields.io/badge/LaTeX-Project-008080?logo=latex&logoColor=white) ![Hugging Face](https://img.shields.io/badge/Hugging_Face-Diffusers-FFD21E?logo=huggingface&logoColor=black)
@@ -69,7 +70,11 @@ NEXT_PUBLIC_BACKEND_URL="http://your-remote-ip:8000" npm run dev
 
 ## Demo video
 
-[![Demo Video](https://img.youtube.com/vi/gp4ISudSgzY/0.jpg)](https://youtu.be/gp4ISudSgzY)
+<div align="center">
+  <a href="https://youtu.be/gp4ISudSgzY">
+    <img src="https://img.youtube.com/vi/gp4ISudSgzY/0.jpg" alt="Demo Video">
+  </a>
+</div>
 
 ## Resources:
  - [SynFER](https://github.com/C0notSilly/SynFER)
