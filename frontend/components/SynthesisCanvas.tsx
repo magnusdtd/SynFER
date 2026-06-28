@@ -6,8 +6,6 @@ import { motion } from "motion/react";
 interface SynthesisCanvasProps {
   generatedImageSrc: string | null;
   isLoading: boolean;
-  showLandmarks: boolean;
-  setShowLandmarks: (show: boolean) => void;
   synthesisMetadata: any;
   selectedFAUs: string[];
 }
@@ -15,8 +13,6 @@ interface SynthesisCanvasProps {
 export function SynthesisCanvas({
   generatedImageSrc,
   isLoading,
-  showLandmarks,
-  setShowLandmarks,
   synthesisMetadata,
   selectedFAUs,
 }: SynthesisCanvasProps) {
@@ -36,24 +32,6 @@ export function SynthesisCanvas({
           </div>
           
           <div className="flex items-center gap-2">
-            {generatedImageSrc && (
-              <label className="flex items-center gap-1.5 cursor-pointer select-none mr-2">
-                <input 
-                  type="checkbox"
-                  checked={showLandmarks}
-                  onChange={() => setShowLandmarks(!showLandmarks)}
-                  className="sr-only"
-                />
-                <span className={`w-8 h-4 rounded-full transition-colors relative flex items-center ${
-                  showLandmarks ? "bg-indigo-600" : "bg-zinc-700"
-                }`}>
-                  <span className={`w-3 h-3 rounded-full bg-white transition-all absolute ${
-                    showLandmarks ? "right-0.5" : "left-0.5"
-                  }`} />
-                </span>
-                <span className="text-[10px] text-zinc-400 font-semibold uppercase tracking-widest">Landmarks</span>
-              </label>
-            )}
             <div className="text-[9px] bg-indigo-900/30 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/30 font-bold tracking-widest">READY</div>
           </div>
         </div>
@@ -89,79 +67,6 @@ export function SynthesisCanvas({
                 referrerPolicy="no-referrer"
               />
 
-              {/* Interactive high-tech simulated vector coordinates mapping overlays */}
-              {showLandmarks && synthesisMetadata?.landmarks && !isLoading && (
-                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">
-                  {/* Eyebrows */}
-                  <path 
-                    d={`M ${synthesisMetadata.landmarks.leftBrow.map((p: any) => `${p.x} ${p.y}`).join(" L ")}`} 
-                    fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="3,3" className="opacity-80"
-                  />
-                  <path 
-                    d={`M ${synthesisMetadata.landmarks.rightBrow.map((p: any) => `${p.x} ${p.y}`).join(" L ")}`} 
-                    fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="3,3" className="opacity-80"
-                  />
-                  
-                  {/* Eyes */}
-                  <path 
-                    d={`M ${synthesisMetadata.landmarks.leftEye.map((p: any) => `${p.x} ${p.y}`).join(" L ")} Z`} 
-                    fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" className="opacity-90"
-                  />
-                  <path 
-                    d={`M ${synthesisMetadata.landmarks.rightEye.map((p: any) => `${p.x} ${p.y}`).join(" L ")} Z`} 
-                    fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" className="opacity-90"
-                  />
-
-                  {/* Nose */}
-                  <path 
-                    d={`M ${synthesisMetadata.landmarks.noseBridge.map((p: any) => `${p.x} ${p.y}`).join(" L ")} M ${synthesisMetadata.landmarks.noseTip.map((p: any) => `${p.x} ${p.y}`).join(" L ")}`} 
-                    fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" className="opacity-80"
-                  />
-
-                  {/* Mouth */}
-                  <path 
-                    d={`M ${synthesisMetadata.landmarks.mouthOuter.map((p: any) => `${p.x} ${p.y}`).join(" L ")} Z`} 
-                    fill="none" stroke="#6366f1" strokeWidth="3" strokeLinecap="round" className="opacity-100"
-                  />
-
-                  {/* Jaw */}
-                  <path 
-                    d={`M ${synthesisMetadata.landmarks.jaw.map((p: any) => `${p.x} ${p.y}`).join(" L ")}`} 
-                    fill="none" stroke="#e4e4e7" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="5,3" className="opacity-50"
-                  />
-
-                  {/* Node Dots map */}
-                  {[
-                    ...synthesisMetadata.landmarks.leftBrow,
-                    ...synthesisMetadata.landmarks.rightBrow,
-                    ...synthesisMetadata.landmarks.leftEye,
-                    ...synthesisMetadata.landmarks.rightEye,
-                    ...synthesisMetadata.landmarks.noseTip,
-                    ...synthesisMetadata.landmarks.mouthOuter,
-                    ...synthesisMetadata.landmarks.jaw
-                  ].map((pt: any, idx: number) => (
-                    <g key={idx}>
-                      <circle 
-                        cx={pt.x} 
-                        cy={pt.y} 
-                        r="3.5" 
-                        className={`fill-[#10b981] stroke-zinc-950 stroke-[1.5] ${
-                          idx % 4 === 0 ? "animate-pulse fill-indigo-400 r-5" : ""
-                        }`}
-                      />
-                      {idx % 7 === 0 && (
-                        <text 
-                          x={pt.x + 6} 
-                          y={pt.y + 3} 
-                          className="fill-indigo-300 text-[8px] opacity-75 font-bold"
-                        >
-                          v{idx}
-                        </text>
-                      )}
-                    </g>
-                  ))}
-                </svg>
-              )}
             </div>
           )}
 

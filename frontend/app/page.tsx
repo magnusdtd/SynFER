@@ -26,7 +26,6 @@ export default function Home() {
   // UX Assist states
   const [fauQuery, setFauQuery] = useState<string>("");
   const [activeFauCategory, setActiveFauCategory] = useState<string>("All");
-  const [showLandmarks, setShowLandmarks] = useState<boolean>(true);
   const [dragOverActive, setDragOverActive] = useState<boolean>(false);
   const [alertMessage, setAlertMessage] = useState<{ type: "success" | "warning" | "error"; text: string } | null>(null);
 
@@ -214,8 +213,6 @@ export default function Home() {
           <SynthesisCanvas
             generatedImageSrc={generatedImageSrc}
             isLoading={isLoading}
-            showLandmarks={showLandmarks}
-            setShowLandmarks={setShowLandmarks}
             synthesisMetadata={synthesisMetadata}
             selectedFAUs={selectedFAUs}
           />
