@@ -1,4 +1,5 @@
 import argparse
+import fcntl
 import glob
 import json
 import os
@@ -15,14 +16,14 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from tqdm import tqdm
 
-from au_adapter import AUProjModel
-from ip_adapter.attention_processor import AttnProcessor2_0 as AttnProcessor
-from ip_adapter.attention_processor import IPAttnProcessor2_0 as IPAttnProcessor
 from OpenGraphAU.model.MEFL import MEFARG
 from OpenGraphAU.utils import image_eval
 from OpenGraphAU.utils import load_state_dict as og_load_state_dict
 from POSTER_V2.models.PosterV2 import pyramid_trans_expr2
 
+from .au_adapter import AUProjModel
+from .ip_adapter.attention_processor import AttnProcessor2_0 as AttnProcessor
+from .ip_adapter.attention_processor import IPAttnProcessor2_0 as IPAttnProcessor
 from .utils import set_seed
 
 
@@ -236,14 +237,17 @@ def load_poster_v2(device):
 def ddim_inversion(pipe, unet, au_proj_model, latent, text_embeddings, num_steps=50, invert_steps=35):
     # Set the DDIM scheduler timesteps
     pipe.scheduler.set_timesteps(num_steps)
-    timesteps = reversed(pipe.scheduler.timesteps)  # from 0 to 999
+    full_timesteps = list(reversed(pipe.scheduler.timesteps))  # from 0 to 999
 
-    # We only invert up to invert_steps
-    timesteps = list(timesteps)[:invert_steps]
+    # The denoising loop starts at: pipe.scheduler.timesteps[len(pipe.scheduler.timesteps) - invert_steps]
+    start_denoise_t = pipe.scheduler.timesteps[len(pipe.scheduler.timesteps) - invert_steps]
 
     z = latent.clone()
     batch_size = z.shape[0]
-    for i, t in enumerate(timesteps):
+    for i, t in enumerate(full_timesteps):
+        if t >= start_denoise_t:
+            break
+
         # Construct neutral prompt + zero AU condition for the entire batch
         zero_au = torch.zeros((batch_size, 41), device=z.device, dtype=z.dtype)
         au_token = au_proj_model(zero_au)
@@ -254,7 +258,7 @@ def ddim_inversion(pipe, unet, au_proj_model, latent, text_embeddings, num_steps
 
         # DDIM forward step calculation
         alpha_prod_t = pipe.scheduler.alphas_cumprod[t]
-        t_next = timesteps[i + 1] if i < len(timesteps) - 1 else pipe.scheduler.timesteps[0]
+        t_next = full_timesteps[i + 1]
         alpha_prod_t_next = pipe.scheduler.alphas_cumprod[t_next]
 
         # DDIM inversion formula
@@ -262,6 +266,27 @@ def ddim_inversion(pipe, unet, au_proj_model, latent, text_embeddings, num_steps
         z = (alpha_prod_t_next**0.5) * z0_estimate + (1.0 - alpha_prod_t_next) ** 0.5 * noise_pred
 
     return z
+
+
+def load_tracker(tracker_path):
+    if not os.path.exists(tracker_path):
+        return set()
+    with open(tracker_path) as f:
+        try:
+            fcntl.flock(f, fcntl.LOCK_SH)
+            return set(line.strip() for line in f if line.strip())
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
+
+
+def append_to_tracker(tracker_path, lines):
+    with open(tracker_path, "a") as f:
+        try:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            for line in lines:
+                f.write(line + "\n")
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
 
 
 def main():
@@ -274,7 +299,11 @@ def main():
     # Set seed based on rank to keep processes diversified if needed, or deterministic
     set_seed(args.seed + accelerator.process_index)
 
-    weight_dtype = torch.float16
+    weight_dtype = torch.float32
+    if accelerator.mixed_precision == "fp16":
+        weight_dtype = torch.float16
+    elif accelerator.mixed_precision == "bf16":
+        weight_dtype = torch.bfloat16
 
     if accelerator.is_main_process:
         print(f"Loading Base SD model from {args.base_model_dir}...")
@@ -344,14 +373,31 @@ def main():
     if args.limit is not None and args.limit > 0:
         if accelerator.is_main_process:
             print(f"Limiting evaluation to {args.limit} random samples.")
-        random.shuffle(source_files)
+        rng = random.Random(args.seed)
+        rng.shuffle(source_files)
         source_files = source_files[: args.limit]
 
     if accelerator.is_main_process:
-        print(f"Total source images to process: {len(source_files)}")
         os.makedirs(args.output_dir, exist_ok=True)
         for category in class_mapping.keys():
             os.makedirs(os.path.join(args.output_dir, category), exist_ok=True)
+    accelerator.wait_for_everyone()
+
+    tracker_path = os.path.join(args.output_dir, "processed_tracker.txt")
+    target_identifiers = set(f"{cat}/{os.path.basename(f)}" for f, cat in source_files)
+
+    processed_set = load_tracker(tracker_path)
+    if len(processed_set) > 0:
+        original_count = len(source_files)
+        source_files = [(f, cat) for f, cat in source_files if f"{cat}/{os.path.basename(f)}" not in processed_set]
+        if accelerator.is_main_process:
+            print(
+                f"Automatically resuming: skipped {original_count - len(source_files)} "
+                f"already generated images. {len(source_files)} remaining."
+            )
+
+    if accelerator.is_main_process:
+        print(f"Total source images to process: {len(source_files)}")
 
     # Prepare custom Dataset and DataLoader with preloading
     dataset = AffectNetEvalDataset(source_files, sd_transform, og_transform, class_mapping)
@@ -466,8 +512,9 @@ def main():
                 loss = F.cross_entropy(logits, target_label_tensor)
 
                 grads = torch.autograd.grad(loss, text_embeddings_grad)[0]
-                grads_norm = grads / (torch.norm(grads, p=2, dim=-1, keepdim=True) + 1e-8)
-                text_embeddings = text_embeddings - args.sg_step_size * grads_norm
+                grads_fp32 = grads.to(torch.float32)
+                grads_norm = grads_fp32 / (torch.norm(grads_fp32, p=2, dim=-1, keepdim=True) + 1e-8)
+                text_embeddings = text_embeddings - args.sg_step_size * grads_norm.to(text_embeddings.dtype)
 
             # Standard CFG denoising step with updated embeddings
             with torch.no_grad():
@@ -489,14 +536,17 @@ def main():
         with torch.no_grad():
             generated_img = pipe.vae.decode(z / pipe.vae.config.scaling_factor).sample
             generated_img = (generated_img / 2 + 0.5).clamp(0, 1)
-            generated_img = generated_img.cpu().permute(0, 2, 3, 1).numpy()
+            generated_img = generated_img.to(torch.float32).cpu().permute(0, 2, 3, 1).numpy()
             generated_img = (generated_img * 255).round().astype(np.uint8)
 
+            saved_identifiers = []
             for b in range(batch_size):
                 out_img = Image.fromarray(generated_img[b])
                 img_basename = os.path.basename(img_paths[b])
                 out_img_path = os.path.join(args.output_dir, categories[b], img_basename)
                 out_img.save(out_img_path)
+                saved_identifiers.append(f"{categories[b]}/{img_basename}")
+            append_to_tracker(tracker_path, saved_identifiers)
 
     # 7. Evaluate Metrics
     # Ensure all processes finish generation before main process evaluates metrics
@@ -504,6 +554,13 @@ def main():
 
     if accelerator.is_main_process:
         print("\nGeneration finished. Calculating metrics...")
+
+        # Delete tracker file if all target images have been generated
+        final_processed = load_tracker(tracker_path)
+        if target_identifiers.issubset(final_processed):
+            if os.path.exists(tracker_path):
+                os.remove(tracker_path)
+                print(f"All {len(target_identifiers)} images generated. Processed tracker file deleted.")
 
         # 7.1 FID Calculation
         print("Calculating FID score...")
@@ -556,6 +613,133 @@ def main():
             acc_cat = (correct_cat / total_cat) * 100 if total_cat > 0 else 0
             print(f"  {category}: {acc_cat:.2f}% ({correct_cat}/{total_cat})")
 
+        # 7.3 HPSv2 Score Calculation
+        print("Calculating HPSv2 score...")
+        import sys
+
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        import HPSv2
+
+        hps_scores = {k: [] for k in class_mapping.keys()}
+        for f, category in tqdm(synthetic_files, desc="Evaluating HPSv2"):
+            prompt = prompt_templates[category]
+            score_list = HPSv2.score(f, prompt)
+            hps_scores[category].extend(score_list)
+
+        overall_hps = (
+            float(np.mean([s for scores in hps_scores.values() for s in scores])) if len(synthetic_files) > 0 else 0.0
+        )
+        print(f"\nOverall HPSv2 on Synthetic Dataset: {overall_hps:.4f}")
+        print("Class-wise HPSv2 scores:")
+        class_hps_dict = {}
+        for category in class_mapping.keys():
+            avg_score = float(np.mean(hps_scores[category])) if len(hps_scores[category]) > 0 else 0.0
+            class_hps_dict[category] = avg_score
+            print(f"  {category}: {avg_score:.4f}")
+
+        # 7.4 MPS Score Calculation
+        print("Calculating MPS score...")
+        mps_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "MPS")
+        if mps_dir not in sys.path:
+            sys.path.append(mps_dir)
+
+        from torch import einsum
+        from transformers import AutoTokenizer, CLIPImageProcessor
+
+        processor_name_or_path = "laion/CLIP-ViT-H-14-laion2B-s32B-b79K"
+        mps_image_processor = CLIPImageProcessor.from_pretrained(processor_name_or_path)
+        mps_tokenizer = AutoTokenizer.from_pretrained(processor_name_or_path, trust_remote_code=True)
+
+        mps_model_path = "models/MPS/MPS_overall_checkpoint.pth"
+        
+        # Patch transformers to load old checkpoints
+        import transformers.models.clip.modeling_clip
+        if not hasattr(transformers.models.clip.modeling_clip, 'CLIPTextTransformer'):
+            transformers.models.clip.modeling_clip.CLIPTextTransformer = transformers.models.clip.modeling_clip.CLIPTextModel
+        if not hasattr(transformers.models.clip.modeling_clip, 'CLIPVisionTransformer'):
+            transformers.models.clip.modeling_clip.CLIPVisionTransformer = transformers.models.clip.modeling_clip.CLIPVisionModel
+            
+        mps_model = torch.load(mps_model_path, map_location="cpu", weights_only=False)
+        
+        # Patch configurations of unpickled model modules to add missing attributes
+        for module in mps_model.modules():
+            if hasattr(module, 'config'):
+                if not hasattr(module.config, '_output_attentions'):
+                    module.config._output_attentions = False
+                if not hasattr(module.config, '_return_dict'):
+                    module.config._return_dict = False
+                if not hasattr(module.config, '_attn_implementation_internal'):
+                    module.config._attn_implementation_internal = "eager"
+            
+            if type(module).__name__ in ['CLIPTextModel', 'CLIPTextTransformer']:
+                if not hasattr(module, 'eos_token_id'):
+                    if hasattr(module, 'config') and hasattr(module.config, 'eos_token_id'):
+                        module.eos_token_id = module.config.eos_token_id
+                    else:
+                        module.eos_token_id = 2
+
+        mps_model.eval().to(device)
+
+        def infer_one_sample_mps(image_path, prompt):
+            def _process_image(img_path):
+                img = Image.open(img_path).convert("RGB")
+                pixel_values = mps_image_processor(img, return_tensors="pt")["pixel_values"]
+                return pixel_values
+
+            def _tokenize(caption):
+                input_ids = mps_tokenizer(
+                    caption,
+                    max_length=mps_tokenizer.model_max_length,
+                    padding="max_length",
+                    truncation=True,
+                    return_tensors="pt",
+                ).input_ids
+                return input_ids
+
+            image_input = _process_image(image_path).to(device)
+            text_input = _tokenize(prompt).to(device)
+            condition = "light, color, clarity, tone, style, ambiance, artistry, shape, face, hair, hands, limbs, structure, instance, texture, quantity, attributes, position, number, location, word, things."
+            condition_batch = _tokenize(condition).repeat(text_input.shape[0], 1).to(device)
+
+            with torch.no_grad():
+                text_f, text_features = mps_model.model.get_text_features(text_input)
+
+                image_f = mps_model.model.get_image_features(image_input.half())
+                condition_f, _ = mps_model.model.get_text_features(condition_batch)
+
+                sim_text_condition = einsum("b i d, b j d -> b j i", text_f, condition_f)
+                sim_text_condition = torch.max(sim_text_condition, dim=1, keepdim=True)[0]
+                sim_text_condition = sim_text_condition / sim_text_condition.max()
+                mask = torch.where(sim_text_condition > 0.3, 0, float("-inf"))
+                mask = mask.repeat(1, image_f.shape[1], 1)
+                image_features = mps_model.cross_model(image_f, text_f, mask.half())[:, 0, :]
+
+                image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+                text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+                image_score = mps_model.logit_scale.exp() * text_features @ image_features.T
+            return image_score[0].item()
+
+        mps_scores = {k: [] for k in class_mapping.keys()}
+        for f, category in tqdm(synthetic_files, desc="Evaluating MPS"):
+            prompt = prompt_templates[category]
+            score = infer_one_sample_mps(f, prompt)
+            mps_scores[category].append(score)
+
+        overall_mps = (
+            float(np.mean([s for scores in mps_scores.values() for s in scores])) if len(synthetic_files) > 0 else 0.0
+        )
+        print(f"\nOverall MPS on Synthetic Dataset: {overall_mps:.4f}")
+        print("Class-wise MPS scores:")
+        class_mps_dict = {}
+        for category in class_mapping.keys():
+            avg_score = float(np.mean(mps_scores[category])) if len(mps_scores[category]) > 0 else 0.0
+            class_mps_dict[category] = avg_score
+            print(f"  {category}: {avg_score:.4f}")
+
+        # Free memory
+        del mps_model
+        torch.cuda.empty_cache()
+
         # Save validation results JSON
         results_path = os.path.join(args.output_dir, "validation_results.json")
         results = {
@@ -564,6 +748,10 @@ def main():
             "class_accuracies": {
                 k: (class_correct[k] / class_total[k] * 100 if class_total[k] > 0 else 0) for k in class_mapping.keys()
             },
+            "overall_hps": overall_hps,
+            "class_hps": class_hps_dict,
+            "overall_mps": overall_mps,
+            "class_mps": class_mps_dict,
             "parameters": vars(args),
         }
         with open(results_path, "w") as f:

@@ -1,0 +1,6 @@
+{
+  "name": "Facial Expression Synthesis",
+  "description": "Interactive dashboard for the SynFER Facial Expression Synthesis AI model, allowing users to alter expressions via text prompts and Facial Action Unit (FAU) controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
