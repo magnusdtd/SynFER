@@ -36,7 +36,7 @@ MPLBACKEND=Agg uv run accelerate launch \
   --resolution=512 \
   --random_flip \
   --train_batch_size=32 \
-  --num_train_epochs=50 \
+  --num_train_epochs=5 \
   --checkpointing_steps=2000 \
   --learning_rate=1e-04 \
   --lr_scheduler="constant" \
