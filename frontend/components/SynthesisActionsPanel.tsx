@@ -24,17 +24,11 @@ export function SynthesisActionsPanel({
           <Sliders className="w-3.5 h-3.5 text-indigo-400" />
           Synthesis Render Metadata
         </h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-[11px] font-medium">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-[11px] font-medium">
           <div>
             <span className="text-zinc-500">Expression State:</span>
             <p className="text-indigo-400 font-bold capitalize mt-0.5">
               {synthesisMetadata?.expressionDetected || "Awaiting Synthesis"}
-            </p>
-          </div>
-          <div>
-            <span className="text-zinc-500">FACS Intensity:</span>
-            <p className="text-emerald-400 font-bold mt-0.5">
-              {synthesisMetadata ? `${synthesisMetadata.fauCountsApplied} AU Nodes` : "Awaiting Input"}
             </p>
           </div>
           <div>

@@ -15,7 +15,7 @@ from PIL import Image
 from src.evaluate_synfer import ddim_inversion
 
 from ..config import settings
-from ..utils import determine_expression_category, make_au_vector, simulate_landmarks
+from ..utils import determine_expression_category, make_au_vector
 
 router = APIRouter()
 
@@ -254,7 +254,7 @@ async def generate_expression(
     duration_ms = int((time.time() - start_time) * 1000)
     base_url = str(request.base_url)
     image_url = f"{base_url}static/{filename}"
-    landmarks = simulate_landmarks(detected_expr, selected_aus)
+
 
     return {
         "success": True,
@@ -263,9 +263,7 @@ async def generate_expression(
         "metadata": {
             "expressionDetected": detected_expr,
             "confidence": f"{confidence:.3f}",
-            "fauCountsApplied": len(selected_aus),
             "renderingTimeMs": duration_ms,
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "landmarks": landmarks,
         },
     }
