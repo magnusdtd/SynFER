@@ -28,9 +28,40 @@ accelerate launch src/train_text_to_image_lora.py \
 ## Notes:
 - Diffusers' EMMAAModel
 
+## Running the Demo Web Application
+
+This repository includes a web application demo consisting of a FastAPI backend and a Next.js frontend.
+
+### 1. Backend
+The backend serves the expression synthesis endpoints. It automatically detects GPU availability and loads the deep learning models (Stable Diffusion, OpenGraphAU, POSTER++).
+
+To start the backend from the repository root:
+```bash
+uv run -m backend.main
+```
+The backend server runs on `http://localhost:8000`. (Checkpoints/weights configuration and mock execution settings can be adjusted in `backend/config.py`).
+
+### 2. Frontend
+To start the interactive frontend dashboard:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+The development server will be hosted on `http://localhost:3000`.
+
+#### Configuring a Custom Backend URL
+If your backend is running on a different port or host (e.g. on a remote server), set the `NEXT_PUBLIC_BACKEND_URL` environment variable when starting or building the frontend:
+```bash
+NEXT_PUBLIC_BACKEND_URL="http://your-remote-ip:8000" npm run dev
+```
+
 ## Resources:
  - [SynFER](https://github.com/C0notSilly/SynFER)
  - [IP-Adapter](https://github.com/tencent-ailab/IP-Adapter/)
  - [Diffusers - Fine-tuning Text-to-Image Model](https://github.com/huggingface/diffusers/tree/main/examples/text_to_image)
  - [POSTER++](https://github.com/Talented-Q/POSTER_V2)
  - [clean-fid for Evaluating Generative Models](https://github.com/GaParmar/clean-fid)
+ - [HPSv2](https://github.com/tgxs002/HPSv2)
+ - [MPS](https://github.com/Kwai-Kolors/MPS)
+ - [FaceScore](https://github.com/OPPO-Mente-Lab/FaceScore)
