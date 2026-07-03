@@ -29,6 +29,34 @@
     \end{itemize}
 \end{frame}
 
+\begin{frame}{Kết quả Thực nghiệm và So sánh}
+    \begin{table}[htbp]
+        \caption{So sánh kết quả sinh ảnh của SynFER do nhóm tái hiện với các phương pháp trong bài báo gốc.}
+        \label{tab:slide_exp_results}
+        \centering
+        \small
+        \begin{tabular}{lcccc}
+            \toprule
+            \textbf{Phương pháp}              & \textbf{FID} ($\downarrow$) & \textbf{FER Acc.} ($\uparrow$) & \textbf{HPSv2} ($\uparrow$) & \textbf{MPS} ($\downarrow$) \\
+            \midrule
+            Stable Diffusion                  & 88.40                       & 20.06\%                        & 0.263                       & 2.00                        \\
+            PixelArt                          & 145.23                      & 15.52\%                        & 0.271                       & 5.26                        \\
+            PlayGround                        & 81.76                       & 21.56\%                        & 0.265                       & 3.73                        \\
+            FineFace                          & 74.61                       & 38.05\%                        & 0.268                       & 1.48                        \\
+            SynFER (Bài báo gốc)              & 16.32                       & 55.14\%                        & 0.280                       & 0.50                        \\
+            \midrule
+            \textbf{SynFER (Our - AffectNet)} & 58.13                       & \textbf{88.90\%}               & 0.271                       & 5.76                        \\
+            \textbf{SynFER (Our - KDEF)}      & 67.96                       & \textbf{95.81\%}               & 0.272                       & 5.90                        \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    \vspace{-0.2cm}
+    \begin{itemize}
+        \item \textbf{FER Acc. cao vượt trội:} Do hiện tượng over-optimization khi sử dụng mạng POSTER\_V2 trong luồng Semantic Guidance ở bước suy luận.
+        \item \textbf{FID \& MPS:} Kém hơn bài báo gốc do giới hạn tài nguyên tính toán và số lượng epochs huấn luyện (5 epochs).
+    \end{itemize}
+\end{frame}
+
 \begin{frame}{Đánh giá và Cải tiến}
     \textbf{Điểm mạnh và Hạn chế:}
     \begin{itemize}
